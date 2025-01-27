@@ -49,7 +49,7 @@ The **Rodent Video Tracking Software** aims to enhance the reproducibility and r
 
 ## Audience
 
-This software is primarily designed for **researchers** and **lab technicians** involved in neuroscientific and behavioral studies requiring precise and consistent tracking of rodent activities.
+This software is primarily designed for PennState Health Department as Capstone project.
 
 ---
 
@@ -94,25 +94,6 @@ This software is primarily designed for **researchers** and **lab technicians** 
 
 7. **Access the Application**:
    - Open your browser and navigate to `http://127.0.0.1:8000/`.
-
-## Contributing
-
-We welcome contributions from the community. Please follow these steps to contribute:
-
-1. **Fork the Repository**.
-2. **Create a New Branch**:
-   ```bash
-   git checkout -b feature/YourFeatureName
-   ```
-3. **Commit Your Changes**:
-   ```bash
-   git commit -m 'Add some feature'
-   ```
-4. **Push to the Branch**:
-   ```bash
-   git push origin feature/YourFeatureName
-   ```
-5. **Open a Pull Request**.
 
 ## License
 
