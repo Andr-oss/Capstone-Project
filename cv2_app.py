@@ -1,7 +1,11 @@
 import cv2
 
+
+video_path = r'C:\Users\mbazi\Downloads\P20221101_Video.mp4'
+
+
 # Initialize video capture
-cap = cv2.VideoCapture(r'C:\Users\mbazi\Downloads\P20221101_Video.avi')  # Replace with your video file path
+cap = cv2.VideoCapture(video_path)  # Replace with your video file path
 
 # Background subtractor
 fgbg = cv2.createBackgroundSubtractorMOG2()

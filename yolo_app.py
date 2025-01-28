@@ -1,11 +1,14 @@
 from ultralytics import YOLO
 import cv2
 
+
+video_path = r'C:\Users\mbazi\Downloads\P20221101_Video.mp4'   # Replace with your video file path
+
+
 #load yolo model
 model = YOLO('yolov8n.pt')
 
 #load video
-video_path = r'C:\Users\mbazi\Downloads\P20221101_Video.avi'
 cap = cv2.VideoCapture(video_path)
 
 ret = True
