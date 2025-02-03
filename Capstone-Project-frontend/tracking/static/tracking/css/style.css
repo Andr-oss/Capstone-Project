@@ -1,0 +1,97 @@
+/* tracking/static/tracking/css/style.css */
+
+/* Overall body styling */
+body {
+    background-color: #f0f4f8; /* A light, clean blue-gray background */
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    color: #333;
+    margin: 0;
+    padding: 0;
+}
+
+/* Header styling (if you use a header in your templates) */
+header {
+    background-color: #2f4f4f; /* Dark slate gray for a lab feel */
+    padding: 20px;
+    text-align: center;
+    color: #fff;
+}
+
+/* Container for page content */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Card styling for grouping content (forms, buttons, etc.) */
+.card {
+    background-color: #fff;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    margin: 20px 0;
+}
+
+/* Headings */
+h1, h2, h3 {
+    color: #2f4f4f;
+    margin-bottom: 10px;
+}
+
+/* Button styling */
+.button, button {
+    background-color: #2f4f4f;
+    color: #fff;
+    border: none;
+    padding: 12px 20px;
+    margin: 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+}
+
+.button:hover, button:hover {
+    background-color: #3f5f5f;
+}
+
+/* Form input styling */
+input[type="text"],
+input[type="password"],
+input[type="file"],
+select,
+textarea {
+    width: 100%;
+    padding: 10px;
+    margin: 5px 0 20px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+/* Styling for file upload button - if you use a label to trigger the file input */
+.file-upload-label {
+    background-color: #2f4f4f;
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: inline-block;
+    margin: 10px 0;
+}
+
+.file-upload-label:hover {
+    background-color: #3f5f5f;
+}
+
+/* Layout styling for pages with multiple buttons (e.g., New Videos page) */
+.button-group {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.button-group button {
+    flex: 1 1 200px;
+    margin: 10px;
+}

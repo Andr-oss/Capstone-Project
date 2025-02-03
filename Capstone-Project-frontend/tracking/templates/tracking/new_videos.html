@@ -1,0 +1,40 @@
+<!-- tracking/templates/tracking/new_videos.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <title>New Videos - Rodent Video Tracking</title>
+    <link rel="stylesheet" href="{% static 'tracking/css/style.css' %}">
+</head>
+<body>
+    <div class="container">
+        <h1>New Videos</h1>
+        <div>
+            <!-- Form for video upload -->
+            <form id="uploadForm" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <!-- Hidden file input to select multiple videos -->
+                <input type="file" id="videoUpload" name="videos" multiple>
+            </form>
+            <!-- Other buttons -->
+            <button type="button" onclick="processVideos()">Process</button>
+            <button type="button" onclick="stopProcess()">Stop process</button>
+            <button type="button" onclick="downloadVideos()">Download</button>
+        </div>
+    </div>
+
+    <script>
+        // Placeholder functions for the other button actions.
+        function processVideos() {
+            alert('Process videos functionality is not implemented yet.');
+        }
+        function stopProcess() {
+            alert('Stop process functionality is not implemented yet.');
+        }
+        function downloadVideos() {
+            alert('Download functionality is not implemented yet.');
+        }
+    </script>
+</body>
+</html>
