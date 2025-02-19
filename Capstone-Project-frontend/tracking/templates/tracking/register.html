@@ -1,0 +1,23 @@
+<!-- tracking/templates/tracking/register.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <title>Register - Rodent Video Tracking</title>
+    <link rel="stylesheet" href="{% static 'tracking/css/style.css' %}">
+</head>
+<body>
+    <div class="container">
+        <h1>Register a New Account</h1>
+        <div class="card">
+            <form method="post">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="button">Register</button>
+            </form>
+            <p>Already have an account? <a href="{% url 'login' %}">Login here</a>.</p>
+        </div>
+    </div>
+</body>
+</html>
