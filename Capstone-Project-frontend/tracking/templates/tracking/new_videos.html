@@ -14,27 +14,58 @@
             <!-- Form for video upload -->
             <form id="uploadForm" method="post" enctype="multipart/form-data">
                 {% csrf_token %}
-                <!-- Hidden file input to select multiple videos -->
-                <input type="file" id="videoUpload" name="videos" multiple>
+                <!-- File input to select multiple videos (visible for demo purposes) -->
+                <input type="file" id="videoUpload" name="videos" multiple accept="video/*">
             </form>
             <!-- Other buttons -->
             <button type="button" onclick="processVideos()">Process</button>
             <button type="button" onclick="stopProcess()">Stop process</button>
             <button type="button" onclick="downloadVideos()">Download</button>
         </div>
+        <!-- Video player element; hidden by default -->
+        <video id="videoPlayer" controls style="display: none; width: 100%; max-width: 600px; margin-top: 20px;">
+            Your browser does not support the video tag.
+        </video>
     </div>
 
     <script>
-        // Placeholder functions for the other button actions.
+        // Function to play the uploaded video using the HTML5 video element.
         function processVideos() {
-            alert('Process videos functionality is not implemented yet.');
+            var fileInput = document.getElementById("videoUpload");
+            if (fileInput.files.length === 0) {
+                alert("Please select a video file to play.");
+                return;
+            }
+            // For demonstration, we take the first selected video file.
+            var videoFile = fileInput.files[0];
+
+            // Check if the file type is a video
+            if (!videoFile.type.startsWith("video/")) {
+                alert("Selected file is not a video.");
+                return;
+            }
+
+            var videoPlayer = document.getElementById("videoPlayer");
+            // Create an object URL for the video file
+            var fileURL = URL.createObjectURL(videoFile);
+            videoPlayer.src = fileURL;
+            videoPlayer.style.display = "block";  // Make the video player visible
+            videoPlayer.play();
         }
+
+        // Function to pause/stop the video playback.
         function stopProcess() {
-            alert('Stop process functionality is not implemented yet.');
+            var videoPlayer = document.getElementById("videoPlayer");
+            if (!videoPlayer.paused) {
+                videoPlayer.pause();
+            }
         }
+
+        // Updated download function to download CSV data.
         function downloadVideos() {
-            alert('Download functionality is not implemented yet.');
-        }
+        // Redirect the browser to the CSV download URL.
+        window.location.href = "{% url 'download_csv' %}";
+    }
     </script>
 </body>
 </html>
