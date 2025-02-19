@@ -101,7 +101,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Contact
 
-For any inquiries, please contact us at ybc5276@psu.edu or mqa5988@psu.edu or aja7182@psu.edu.
+For any inquiries, please contact us at ybc5276@psu.edu(Frontend) or mqa5988@psu.edu or aja7182@psu.edu.
 
 ---
 
