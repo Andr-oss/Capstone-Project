@@ -76,3 +76,8 @@ def download_csv(request):
         "Head_rat_width"
     ])
     return response
+
+def livestream_view(request):
+    if not request.user.is_authenticated:
+        return redirect('login')
+    return render(request, 'tracking/livestream.html')

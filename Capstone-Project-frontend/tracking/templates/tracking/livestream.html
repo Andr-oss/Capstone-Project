@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <title>Livestream - Rodent Video Tracking</title>
+    <link rel="stylesheet" href="{% static 'tracking/css/style.css' %}">
+    <style>
+        .recording-buttons {
+            margin-top: 20px;
+        }
+        .recording-buttons button {
+            margin: 5px;
+            padding: 10px 15px;
+            font-size: 1rem;
+        }
+        /* Timeline container styling */
+        .timeline-container {
+            margin-top: 15px;
+            display: flex;
+            align-items: center;
+        }
+        .timeline-container input[type="range"] {
+            flex: 1;
+            margin-right: 10px;
+        }
+        .timeline-container span {
+            font-family: monospace;
+            min-width: 60px;
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Live Stream</h1>
+        <!-- Video element to display the camera feed or recorded video -->
+        <video id="liveVideo" autoplay playsinline style="width:100%; max-width:600px; margin-top:20px;">
+            Your browser does not support the video tag.
+        </video>
+
+        <!-- Timeline for recording progress / scrubbing after recording stops -->
+        <div class="timeline-container">
+            <input type="range" id="progressBar" value="0" min="0" step="0.1" style="display:none;">
+            <span id="timerDisplay">00:00</span>
+        </div>
+
+        <!-- Recording control buttons -->
+        <div class="recording-buttons">
+            <button id="startRecordBtn" type="button">Start Recording</button>
+            <button id="stopRecordBtn" type="button">Stop Recording</button>
+        </div>
+    </div>
+
+    <script>
+        let stream;
+        let mediaRecorder;
+        let recordedChunks = [];
+        let recordingTimer;
+        let elapsedTime = 0;
+        const timerDisplay = document.getElementById('timerDisplay');
+        const progressBar = document.getElementById('progressBar');
+        const video = document.getElementById('liveVideo');
+
+        // Request camera stream and assign to global variable 'stream'
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(function(s) {
+                    stream = s;
+                    if ('srcObject' in video) {
+                        video.srcObject = stream;
+                    } else {
+                        video.src = window.URL.createObjectURL(stream);
+                    }
+                    video.play();
+                })
+                .catch(function(err) {
+                    console.error("Error accessing the camera: " + err);
+                    alert("Unable to access the camera. Please check your camera settings.");
+                });
+        } else {
+            alert("Your browser does not support accessing the camera.");
+        }
+
+        // Helper: Format seconds to mm:ss
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+        }
+
+        // Start recording function
+        function startRecording() {
+            if (!stream) {
+                alert("Camera stream not available.");
+                return;
+            }
+            recordedChunks = [];
+            elapsedTime = 0;
+            timerDisplay.textContent = formatTime(elapsedTime);
+            progressBar.value = 0;
+            progressBar.style.display = "block";
+            // Start timer to update elapsed time every second
+            recordingTimer = setInterval(() => {
+                elapsedTime++;
+                timerDisplay.textContent = formatTime(elapsedTime);
+                // Update progress bar max during live recording
+                progressBar.max = elapsedTime;
+                // Keep the slider at the right end if not being dragged
+                if (!progressBar.dragging) {
+                    progressBar.value = elapsedTime;
+                }
+            }, 1000);
+
+            try {
+                mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+            } catch (e) {
+                alert("MediaRecorder is not supported in your browser.");
+                return;
+            }
+            mediaRecorder.ondataavailable = function(e) {
+                if (e.data.size > 0) {
+                    recordedChunks.push(e.data);
+                }
+            };
+            mediaRecorder.onstop = function() {
+                clearInterval(recordingTimer);
+                // Create a blob from recorded chunks and load into video element
+                const blob = new Blob(recordedChunks, { type: 'video/webm' });
+                const blobURL = URL.createObjectURL(blob);
+                video.srcObject = null; // stop live stream display
+                video.src = blobURL;
+                video.controls = true;
+                // Set progress bar max to video duration after metadata is loaded
+                video.onloadedmetadata = function() {
+                    progressBar.max = video.duration;
+                };
+                // Update progress bar as video plays
+                video.ontimeupdate = function() {
+                    progressBar.value = video.currentTime;
+                    timerDisplay.textContent = formatTime(video.currentTime);
+                };
+            };
+            mediaRecorder.start();
+            console.log("Recording started.");
+        }
+
+        // Stop recording function
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state !== "inactive") {
+                mediaRecorder.stop();
+                console.log("Recording stopped.");
+            } else {
+                alert("Recording is not in progress.");
+            }
+        }
+
+        // Attach functions to buttons
+        document.getElementById('startRecordBtn').addEventListener('click', startRecording);
+        document.getElementById('stopRecordBtn').addEventListener('click', stopRecording);
+
+        // Allow the progress bar to seek the recorded video after recording stops
+        progressBar.addEventListener('input', function() {
+            // Mark that the slider is being dragged
+            progressBar.dragging = true;
+            if (!video.paused) {
+                video.pause();
+            }
+            timerDisplay.textContent = formatTime(progressBar.value);
+        });
+
+        progressBar.addEventListener('change', function() {
+            // When user finishes dragging, update video currentTime
+            if (video.src && video.src !== "") {
+                video.currentTime = progressBar.value;
+            }
+            progressBar.dragging = false;
+        });
+    </script>
+</body>
+</html>

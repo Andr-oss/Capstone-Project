@@ -8,4 +8,5 @@ urlpatterns = [
     path('new-videos/', views.new_videos_view, name='new_videos'),
     path('register/', views.register_view, name='register'),
     path('download-csv/', views.download_csv, name='download_csv'),
+    path('livestream/', views.livestream_view, name='livestream'),
 ]
