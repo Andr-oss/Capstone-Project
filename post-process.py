@@ -1,7 +1,7 @@
 import pandas as pd
 
 # File path
-input_file = r"C:\Users\Bazil\Downloads\CollectedData_Andrew.csv"
+input_file = r"C:\Users\Bazil\Downloads\CollectedData_Chen.csv"
 output_file = r"C:\Users\Bazil\Downloads\output.csv"
 
 # Read the CSV file
@@ -28,7 +28,7 @@ def find_centroid(p1, p2, p3):
 # Ensure correct column names before applying function
 required_columns = ["Head_x", "Head_y", "Left_Ear_x", "Left_Ear_y", "Right_Ear_x", "Right_Ear_y"]
 if all(col in df.columns for col in required_columns):
-    df["Processed_Head_Center"] = df.apply(lambda row: find_centroid(
+    df["Processed_Head_Center_x"], df["Processed_Head_Center_y"] = df.apply(lambda row: find_centroid(
         (float(row["Head_x"]), float(row["Head_y"])),
         (float(row["Left_Ear_x"]), float(row["Left_Ear_y"])),
         (float(row["Right_Ear_x"]), float(row["Right_Ear_y"]))
