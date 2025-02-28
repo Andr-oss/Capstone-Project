@@ -1,31 +1,25 @@
 import pandas as pd
 import numpy as np
 import cv2
-import time
-
-from sympy import false
 
 
 class RodentVisualizerCV:
-    def __init__(self, csv_path, width=800, height=600):
-        """
-        Initialize the OpenCV-based rodent movement visualizer.
+    def __init__(self, csv_path, width=800, height=600, trail_length=None):
 
-        Parameters:
-        -----------
-        csv_path : str
-            Path to the CSV file with tracking data
-        width : int
-            Width of the display window
-        height : int
-            Height of the display window
-        """
         # Load the data
         self.data = pd.read_csv(csv_path)
 
-        # Extract frame identifiers and create a mapping
-        self.frame_ids = self.data['frame'].unique()
+        # Debug: Print column names to check exact format
+        print("CSV columns:", self.data.columns.tolist())
+
+        # Find the frame column (first column)
+        self.frame_column = self.data.columns[0]  # Assume first column is frame
+        print(f"Using '{self.frame_column}' as frame identifier column")
+
+        # Get unique frame identifiers and count
+        self.frame_ids = self.data[self.frame_column].unique()
         self.frames = len(self.frame_ids)
+        print(f"Found {self.frames} unique frames")
 
         # Set up display dimensions
         self.width = width
@@ -37,6 +31,7 @@ class RodentVisualizerCV:
             if col.endswith('_x') or col.endswith('_y'):
                 self.body_parts.add(col.rsplit('_', 1)[0])
         self.body_parts = list(self.body_parts)
+        print(f"Detected body parts: {self.body_parts}")
 
         # Assign colors to each body part (BGR format for OpenCV)
         self.colors = {}
@@ -61,6 +56,7 @@ class RodentVisualizerCV:
         self.max_x = self.data[x_cols].max().max()
         self.min_y = self.data[y_cols].min().min()
         self.max_y = self.data[y_cols].max().max()
+        print(f"Data bounds: X={self.min_x} to {self.max_x}, Y={self.min_y} to {self.max_y}")
 
         # Add some padding to the bounds
         pad_x = (self.max_x - self.min_x) * 0.1
@@ -72,48 +68,41 @@ class RodentVisualizerCV:
 
         # Set up the trail data for each part
         self.trails = {part: [] for part in self.body_parts}
-        self.trail_length = 30  # Number of frames to show in the trail
+        self.trail_length = trail_length  # Number of frames to show in the trail (None = unlimited)
 
     def normalize_coords(self, x, y):
-        """Convert data coordinates to pixel coordinates"""
+        """Convert data coordinates to pixel coordinates with bounds checking"""
         norm_x = int((x - self.min_x) / (self.max_x - self.min_x) * (self.width - 40) + 20)
         norm_y = int((y - self.min_y) / (self.max_y - self.min_y) * (self.height - 40) + 20)
+
+        # Ensure within bounds
+        norm_x = max(0, min(norm_x, self.width - 1))
+        norm_y = max(0, min(norm_y, self.height - 1))
+
         return norm_x, norm_y
 
-    def display_animation(self, delay=33, connections=False):
-        """
-        Display the animation using OpenCV.
-
-        Parameters:
-        -----------
-        delay : int
-            Delay between frames in milliseconds (controls speed)
-        connections : bool
-            Whether to draw connections between body parts
-        """
-
-        print(f"Data bounds: X={self.min_x} to {self.max_x}, Y={self.min_y} to {self.max_y}")
-        print(f"Body parts detected: {self.body_parts}")
-        print(f"First few rows of data:\n{self.data.head()}")
+    def display_animation(self, delay=33, connections=True):
 
         # Create window
         cv2.namedWindow("Rodent Movement Tracking", cv2.WINDOW_NORMAL)
         cv2.resizeWindow("Rodent Movement Tracking", self.width, self.height)
 
-        # Process each frame
-        for i, frame_id in enumerate(sorted(self.frame_ids)):
+        processed_frames = 0
 
+        # Process each frame
+        for frame_idx, frame_id in enumerate(sorted(self.frame_ids)):
             # Get data for current frame
-            frame_data = self.data[self.data['frame'] == frame_id]
+            frame_data = self.data[self.data[self.frame_column] == frame_id]
+            print(f"Processing frame {frame_idx + 1}/{self.frames}: {frame_id}, Data rows: {len(frame_data)}")
 
             # Create a blank canvas
             canvas = np.ones((self.height, self.width, 3), dtype=np.uint8) * 255
 
             # Draw coordinate grid
-            for i in range(0, self.width, 100):
-                cv2.line(canvas, (i, 0), (i, self.height), (240, 240, 240), 1)
-            for i in range(0, self.height, 100):
-                cv2.line(canvas, (0, i), (self.width, i), (240, 240, 240), 1)
+            for grid_i in range(0, self.width, 100):
+                cv2.line(canvas, (grid_i, 0), (grid_i, self.height), (240, 240, 240), 1)
+            for grid_i in range(0, self.height, 100):
+                cv2.line(canvas, (0, grid_i), (self.width, grid_i), (240, 240, 240), 1)
 
             # Store positions for connections
             positions = {}
@@ -128,22 +117,36 @@ class RodentVisualizerCV:
                     y = frame_data[y_col].values
 
                     if len(x) > 0 and len(y) > 0:
+                        # Debug: Print coordinate transformation
+                        print(f"  Part {part}: Original ({x[0]}, {y[0]})")
+
                         # Store position for later use in connections
                         px, py = self.normalize_coords(x[0], y[0])
+                        print(f"  Part {part}: Normalized ({px}, {py})")
+
                         positions[part] = (px, py)
 
                         # Update trail
                         self.trails[part].append((px, py))
-                        if len(self.trails[part]) > self.trail_length:
+                        # Only limit trail length if trail_length is specified
+                        if self.trail_length is not None and len(self.trails[part]) > self.trail_length:
                             self.trails[part].pop(0)
 
                         # Draw trail
-                        for i in range(1, len(self.trails[part])):
-                            alpha = 0.3 + 0.7 * i / len(self.trails[part])  # Increase opacity for newer points
+                        for trail_i in range(1, len(self.trails[part])):
+                            if self.trail_length is not None:
+                                # Fade based on trail position
+                                alpha = 0.3 + 0.7 * trail_i / len(self.trails[part])
+                            else:
+                                # If unlimited trail, fade based on distance from current point
+                                distance_from_current = len(self.trails[part]) - trail_i
+                                alpha = max(0.1, 1.0 - (distance_from_current / 50.0))  # Fade out over 50 frames
+
                             color = self.colors[part]
                             # Scale alpha to color
                             scaled_color = tuple(int(c * alpha) for c in color)
-                            cv2.line(canvas, self.trails[part][i - 1], self.trails[part][i], scaled_color, 2)
+                            cv2.line(canvas, self.trails[part][trail_i - 1], self.trails[part][trail_i], scaled_color,
+                                     2)
 
                         # Draw current position (larger dot)
                         cv2.circle(canvas, (px, py), 6, self.colors[part], -1)
@@ -151,11 +154,6 @@ class RodentVisualizerCV:
                         # Label the dot
                         cv2.putText(canvas, part, (px + 10, py),
                                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, self.colors[part], 1)
-
-                # Inside the body part loop, add:
-                if len(x) > 0 and len(y) > 0:
-                    px, py = self.normalize_coords(x[0], y[0])
-                    print(f"Frame {i+1}, Part {part}: Original ({x[0]}, {y[0]}) → Normalized ({px}, {py})")
 
             # Draw connections between parts if requested
             if connections:
@@ -175,7 +173,7 @@ class RodentVisualizerCV:
                     cv2.line(canvas, positions['body_center'], positions['right_body'], (100, 100, 100), 2)
 
             # Add frame counter
-            cv2.putText(canvas, f"Frame: {i + 1}/{self.frames}", (20, 30),
+            cv2.putText(canvas, f"Frame: {frame_idx + 1}/{self.frames}", (20, 30),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 0), 2)
 
             # Add legend for body parts
@@ -188,6 +186,9 @@ class RodentVisualizerCV:
 
             # Display the image
             cv2.imshow("Rodent Movement Tracking", canvas)
+            print(f"Displayed frame {frame_idx + 1}")
+
+            processed_frames += 1
 
             # Wait for delay or key press
             key = cv2.waitKey(delay)
@@ -196,17 +197,18 @@ class RodentVisualizerCV:
             elif key == 32:  # Space to pause/resume
                 cv2.waitKey(0)
 
-            # Add at the end of each frame loop:
-            cv2.circle(canvas, (self.width // 2, self.height // 2), 10, (0, 0, 255), -1)  # Test red dot in center
-
+        print(f"Total frames processed: {processed_frames}")
+        # Wait for a key press before closing
+        print("Animation complete, press any key to close")
+        cv2.waitKey(0)
         cv2.destroyAllWindows()
 
 
 # Example usage
 if __name__ == "__main__":
     # Replace with your actual CSV file path
-    csv_path = r"C:\Users\mbazi\Downloads\output(in).csv"
+    csv_path = r"C:\Users\Bazil\Downloads\output.csv"  # Update with your path
 
     # Create visualizer and display animation
     visualizer = RodentVisualizerCV(csv_path, width=1000, height=800)
-    visualizer.display_animation(delay=30)  # Delay in milliseconds
+    visualizer.display_animation(delay=100)  # Increased delay for debugging
