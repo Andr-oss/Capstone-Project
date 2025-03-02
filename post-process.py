@@ -21,22 +21,32 @@ df.rename(columns={df.columns[0]: "Frame"}, inplace=True)
 
 print("Columns:", df.columns.tolist())
 
+
 # Define function to find center of three points
 def find_centroid(p1, p2, p3):
-    return (p1[0] + p2[0] + p3[0]) / 3, (p1[1] + p2[1] + p3[1]) / 3
+    x = round((p1[0] + p2[0] + p3[0]) / 3, 2)
+    y = round((p1[1] + p2[1] + p3[1]) / 3, 2)
+    return x, y
+
 
 # Ensure correct column names before applying function
 required_columns = ["Head_x", "Head_y", "Left_Ear_x", "Left_Ear_y", "Right_Ear_x", "Right_Ear_y"]
 if all(col in df.columns for col in required_columns):
-    df["Processed_Head_Center_x"], df["Processed_Head_Center_y"] = df.apply(lambda row: find_centroid(
+    # Fix: Split the result into separate series before assigning to columns
+    centroids = df.apply(lambda row: find_centroid(
         (float(row["Head_x"]), float(row["Head_y"])),
         (float(row["Left_Ear_x"]), float(row["Left_Ear_y"])),
         (float(row["Right_Ear_x"]), float(row["Right_Ear_y"]))
     ), axis=1)
+
+    # Extract x and y coordinates from the series of tuples
+    df["Processed_Head_Center_x"] = centroids.apply(lambda x: x[0])
+    df["Processed_Head_Center_y"] = centroids.apply(lambda x: x[1])
 else:
     print("Error: Missing required columns", required_columns)
 
 # Save the processed file
 df.to_csv(output_file, index=False)
 
+print(df.head())
 print(f"Processed data saved to {output_file}")
