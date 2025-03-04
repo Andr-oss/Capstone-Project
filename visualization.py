@@ -2,10 +2,8 @@ import pandas as pd
 import numpy as np
 import cv2
 
-
-class RodentVisualizerCV:
-    def __init__(self, csv_path, width=800, height=600, trail_length=None):
-
+class RodentVisualizer:
+    def __init__(self, csv_path, width=800, height=600, trail_length=None, show_trails=True, show_connections=True):
         # Load the data
         self.data = pd.read_csv(csv_path)
 
@@ -24,6 +22,10 @@ class RodentVisualizerCV:
         # Set up display dimensions
         self.width = width
         self.height = height
+
+        # Visualization toggles
+        self.show_trails = show_trails
+        self.show_connections = show_connections
 
         # Detect body parts from CSV column names
         self.body_parts = set()
@@ -81,8 +83,7 @@ class RodentVisualizerCV:
 
         return norm_x, norm_y
 
-    def display_animation(self, delay=33, connections=True):
-
+    def display_animation(self, delay=33):
         # Create window
         cv2.namedWindow("Rodent Movement Tracking", cv2.WINDOW_NORMAL)
         cv2.resizeWindow("Rodent Movement Tracking", self.width, self.height)
@@ -116,7 +117,8 @@ class RodentVisualizerCV:
                     x = frame_data[x_col].values
                     y = frame_data[y_col].values
 
-                    if len(x) > 0 and len(y) > 0:
+                    # Check for valid (non-null, non-blank) values
+                    if len(x) > 0 and len(y) > 0 and not pd.isna(x[0]) and not pd.isna(y[0]):
                         # Debug: Print coordinate transformation
                         print(f"  Part {part}: Original ({x[0]}, {y[0]})")
 
@@ -133,20 +135,21 @@ class RodentVisualizerCV:
                             self.trails[part].pop(0)
 
                         # Draw trail
-                        for trail_i in range(1, len(self.trails[part])):
-                            if self.trail_length is not None:
-                                # Fade based on trail position
-                                alpha = 0.3 + 0.7 * trail_i / len(self.trails[part])
-                            else:
-                                # If unlimited trail, fade based on distance from current point
-                                distance_from_current = len(self.trails[part]) - trail_i
-                                alpha = max(0.1, 1.0 - (distance_from_current / 50.0))  # Fade out over 50 frames
+                        if self.show_trails:
+                            for trail_i in range(1, len(self.trails[part])):
+                                if self.trail_length is not None:
+                                    # Fade based on trail position
+                                    alpha = 0.3 + 0.7 * trail_i / len(self.trails[part])
+                                else:
+                                    # If unlimited trail, fade based on distance from current point
+                                    distance_from_current = len(self.trails[part]) - trail_i
+                                    alpha = max(0.1, 1.0 - (distance_from_current / 50.0))  # Fade out over 50 frames
 
-                            color = self.colors[part]
-                            # Scale alpha to color
-                            scaled_color = tuple(int(c * alpha) for c in color)
-                            cv2.line(canvas, self.trails[part][trail_i - 1], self.trails[part][trail_i], scaled_color,
-                                     2)
+                                color = self.colors[part]
+                                # Scale alpha to color
+                                scaled_color = tuple(int(c * alpha) for c in color)
+                                cv2.line(canvas, self.trails[part][trail_i - 1], self.trails[part][trail_i], scaled_color,
+                                         2)
 
                         # Draw current position (larger dot)
                         cv2.circle(canvas, (px, py), 6, self.colors[part], -1)
@@ -156,7 +159,8 @@ class RodentVisualizerCV:
                                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, self.colors[part], 1)
 
             # Draw connections between parts if requested
-            if connections:
+            if self.show_connections:
+                # Only draw connections if all required parts have valid positions
                 # Connect head-body-tail
                 if all(part in positions for part in ['head', 'body_center', 'tail_base']):
                     cv2.line(canvas, positions['head'], positions['body_center'], (100, 100, 100), 2)
@@ -207,8 +211,15 @@ class RodentVisualizerCV:
 # Example usage
 if __name__ == "__main__":
     # Replace with your actual CSV file path
-    csv_path = r"C:\Users\Bazil\Downloads\output.csv"  # Update with your path
+    csv_path = r"C:\Users\mbazi\Downloads\output(in).csv"  # Update with your path
 
-    # Create visualizer and display animation
-    visualizer = RodentVisualizerCV(csv_path, width=1000, height=800)
-    visualizer.display_animation(delay=100)  # Increased delay for debugging
+    # Create visualizer with customizable trail and connection options
+    visualizer = RodentVisualizer(
+        csv_path,
+        width=1000,
+        height=800,
+        trail_length=5,  # Show last X frames of trail
+        show_trails=True,
+        show_connections=True
+    )
+    visualizer.display_animation(delay=30)  # delay for debugging
