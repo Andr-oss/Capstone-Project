@@ -2,8 +2,11 @@ import pandas as pd
 import numpy as np
 import cv2
 
+
 class RodentVisualizerCV:
-    def __init__(self, csv_path, width=800, height=600, trail_length=None, show_trails=True, show_connections=True):
+    def __init__(self, csv_path, width=800, height=600, trail_length=None,
+                 show_trails=True, show_connections=True, show_segmentation=True,
+                 segmentation_opacity=0.3, show_labels=True, show_legend=True):
         # Load the data
         self.data = pd.read_csv(csv_path)
 
@@ -26,6 +29,10 @@ class RodentVisualizerCV:
         # Visualization toggles
         self.show_trails = show_trails
         self.show_connections = show_connections
+        self.show_segmentation = show_segmentation
+        self.segmentation_opacity = segmentation_opacity
+        self.show_labels = show_labels
+        self.show_legend = show_legend
 
         # Detect body parts and track original column names
         self.body_part_columns = {}  # Format: {processed_name: {"_x": "Original_X_col", "_y": "Original_Y_col"}}
@@ -58,6 +65,13 @@ class RodentVisualizerCV:
 
         for i, part in enumerate(self.body_parts):
             self.colors[part] = color_list[i % len(color_list)]
+
+        # Define segmentation colors
+        self.segmentation_colors = {
+            'ear': (200, 200, 255),  # Light red (BGR format)
+            'body': (200, 255, 255),  # Light yellow
+            'tail': (255, 220, 200),  # Light blue
+        }
 
         # Calculate bounds using ACTUAL column names
         x_cols = [cols["_x"] for part, cols in self.body_part_columns.items() if "_x" in cols]
@@ -117,7 +131,7 @@ class RodentVisualizerCV:
             # Store positions for connections
             positions = {}
 
-            # Draw each body part
+            # Calculate positions for all body parts first
             for part in self.body_parts:
                 cols = self.body_part_columns[part]  # Get original column names
                 x_col = cols["_x"]
@@ -138,29 +152,36 @@ class RodentVisualizerCV:
                     if self.trail_length is not None and len(self.trails[part]) > self.trail_length:
                         self.trails[part].pop(0)
 
-                    # Draw trail
-                    if self.show_trails:
-                        for trail_i in range(1, len(self.trails[part])):
-                            if self.trail_length is not None:
-                                # Fade based on trail position
-                                alpha = 0.3 + 0.7 * trail_i / len(self.trails[part])
-                            else:
-                                # If unlimited trail, fade based on distance from current point
-                                distance_from_current = len(self.trails[part]) - trail_i
-                                alpha = max(0.1, 1.0 - (distance_from_current / 50.0))  # Fade out over 50 frames
+            # Draw segmentation if requested (bottom layer)
+            if self.show_segmentation:
+                # Create a transparent overlay for the polygon fills
+                overlay = canvas.copy()
 
-                            color = self.colors[part]
-                            # Scale alpha to color
-                            scaled_color = tuple(int(c * alpha) for c in color)
-                            cv2.line(canvas, self.trails[part][trail_i - 1], self.trails[part][trail_i], scaled_color, 2)
+                # Fill main body area
+                if all(part in positions for part in ['left_body', 'body_center', 'right_body', 'tail_base']):
+                    if all(part in positions for part in ['left_ear', 'right_ear']):
+                        body_polygon = np.array([
+                            positions['left_body'],
+                            positions['left_ear'],
+                            positions['right_ear'],
+                            positions['right_body'],
+                            positions['tail_base']
+                        ], np.int32)
+                        cv2.fillPoly(overlay, [body_polygon], self.segmentation_colors['body'])
 
-                    # Draw current position (larger dot)
-                    cv2.circle(canvas, (px, py), 6, self.colors[part], -1)
+                # Fill ear-head triangle
+                if all(part in positions for part in ['left_ear', 'head', 'right_ear']):
+                    ear_triangle = np.array([
+                        positions['left_ear'],
+                        positions['head'],
+                        positions['right_ear']
+                    ], np.int32)
+                    cv2.fillPoly(overlay, [ear_triangle], self.segmentation_colors['ear'])
 
-                    # Label the dot
-                    cv2.putText(canvas, part, (px + 10, py), cv2.FONT_HERSHEY_SIMPLEX, 0.5, self.colors[part], 1)
+                # Blend the overlay with the main canvas
+                cv2.addWeighted(overlay, self.segmentation_opacity, canvas, 1 - self.segmentation_opacity, 0, canvas)
 
-            # Draw connections between parts if requested
+            # Draw connections if requested (middle layer)
             if self.show_connections:
                 # Connect head-body_center-tail_base (Make Spine)
                 if all(part in positions for part in ['head', 'body_center', 'tail_base']):
@@ -188,17 +209,47 @@ class RodentVisualizerCV:
                     cv2.line(canvas, positions['left_body'], positions['tail_base'], (100, 100, 100), 2)
                     cv2.line(canvas, positions['right_body'], positions['tail_base'], (100, 100, 100), 2)
 
+            # Draw trails and points (top layer)
+            for part in self.body_parts:
+                if part in positions:
+                    px, py = positions[part]
+
+                    # Draw trail
+                    if self.show_trails:
+                        for trail_i in range(1, len(self.trails[part])):
+                            if self.trail_length is not None:
+                                # Fade based on trail position
+                                alpha = 0.3 + 0.7 * trail_i / len(self.trails[part])
+                            else:
+                                # If unlimited trail, fade based on distance from current point
+                                distance_from_current = len(self.trails[part]) - trail_i
+                                alpha = max(0.1, 1.0 - (distance_from_current / 50.0))  # Fade out over 50 frames
+
+                            color = self.colors[part]
+                            # Scale alpha to color
+                            scaled_color = tuple(int(c * alpha) for c in color)
+                            cv2.line(canvas, self.trails[part][trail_i - 1], self.trails[part][trail_i], scaled_color,
+                                     2)
+
+                    # Draw current position (larger dot)
+                    cv2.circle(canvas, (px, py), 6, self.colors[part], -1)
+
+                    # Label the dot
+                    if self.show_labels:
+                        cv2.putText(canvas, part, (px + 10, py), cv2.FONT_HERSHEY_SIMPLEX, 0.5, self.colors[part], 1)
+
             # Add frame counter
             cv2.putText(canvas, f"Frame: {frame_idx + 1}/{self.frames}", (20, 30),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 0), 2)
 
             # Add legend for body parts
-            legend_y = 60
-            for part in self.body_parts:
-                cv2.circle(canvas, (30, legend_y), 6, self.colors[part], -1)
-                cv2.putText(canvas, part, (45, legend_y + 5),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
-                legend_y += 25
+            if self.show_legend:
+                legend_y = 60
+                for part in self.body_parts:
+                    cv2.circle(canvas, (30, legend_y), 6, self.colors[part], -1)
+                    cv2.putText(canvas, part, (45, legend_y + 5),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
+                    legend_y += 25
 
             # Display the image
             cv2.imshow("Rodent Movement Tracking", canvas)
@@ -225,13 +276,17 @@ if __name__ == "__main__":
     # Replace with your actual CSV file path
     csv_path = r"C:\Users\mbazi\Downloads\output.csv"  # Update with your path
 
-    # Create visualizer with customizable trail and connection options
+    # Create visualizer with customizable visualization options
     visualizer = RodentVisualizerCV(
         csv_path,
         width=1000,
         height=800,
         trail_length=5,  # Show last x frames of trail
         show_trails=False,  # Toggle trails on/off
-        show_connections=True  # Toggle connections on/off
+        show_connections=True,  # Toggle connections on/off
+        show_segmentation=True,  # Toggle segmentation fill on/off
+        segmentation_opacity=0.5,  # Opacity of segmentation fill (0-1)
+        show_labels=False,  # Toggle labels on/off
+        show_legend=True  # Toggle legend on/off
     )
-    visualizer.display_animation(delay=100)  # delay for debugging
+    visualizer.display_animation(delay=30)  # delay for debugging
