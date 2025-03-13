@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import cv2
 
-class RodentVisualizer:
+class RodentVisualizerCV:
     def __init__(self, csv_path, width=800, height=600, trail_length=None, show_trails=True, show_connections=True):
         # Load the data
         self.data = pd.read_csv(csv_path)
@@ -27,12 +27,21 @@ class RodentVisualizer:
         self.show_trails = show_trails
         self.show_connections = show_connections
 
-        # Detect body parts from CSV column names
-        self.body_parts = set()
+        # Detect body parts and track original column names
+        self.body_part_columns = {}  # Format: {processed_name: {"_x": "Original_X_col", "_y": "Original_Y_col"}}
         for col in self.data.columns:
-            if col.endswith('_x') or col.endswith('_y'):
-                self.body_parts.add(col.rsplit('_', 1)[0])
-        self.body_parts = list(self.body_parts)
+            if col.endswith("_x") or col.endswith("_y"):
+                # Split into base name and suffix while preserving original case
+                base_name, suffix = col.rsplit("_", 1)
+                processed_name = base_name.lower().replace(" ", "_")  # Normalize to lowercase snake_case
+
+                # Track original columns
+                if processed_name not in self.body_part_columns:
+                    self.body_part_columns[processed_name] = {}
+                self.body_part_columns[processed_name][f"_{suffix}"] = col  # Store original column name
+
+        # Filter to valid parts with both coordinates
+        self.body_parts = [part for part, cols in self.body_part_columns.items() if "_x" in cols and "_y" in cols]
         print(f"Detected body parts: {self.body_parts}")
 
         # Assign colors to each body part (BGR format for OpenCV)
@@ -50,9 +59,9 @@ class RodentVisualizer:
         for i, part in enumerate(self.body_parts):
             self.colors[part] = color_list[i % len(color_list)]
 
-        # Calculate the data bounds to normalize coordinates
-        x_cols = [f"{part}_x" for part in self.body_parts]
-        y_cols = [f"{part}_y" for part in self.body_parts]
+        # Calculate bounds using ACTUAL column names
+        x_cols = [cols["_x"] for part, cols in self.body_part_columns.items() if "_x" in cols]
+        y_cols = [cols["_y"] for part, cols in self.body_part_columns.items() if "_y" in cols]
 
         self.min_x = self.data[x_cols].min().min()
         self.max_x = self.data[x_cols].max().max()
@@ -110,71 +119,74 @@ class RodentVisualizer:
 
             # Draw each body part
             for part in self.body_parts:
-                x_col = f"{part}_x"
-                y_col = f"{part}_y"
+                cols = self.body_part_columns[part]  # Get original column names
+                x_col = cols["_x"]
+                y_col = cols["_y"]
 
-                if x_col in frame_data.columns and y_col in frame_data.columns:
-                    x = frame_data[x_col].values
-                    y = frame_data[y_col].values
+                x = frame_data[x_col].values
+                y = frame_data[y_col].values
 
-                    # Check for valid (non-null, non-blank) values
-                    if len(x) > 0 and len(y) > 0 and not pd.isna(x[0]) and not pd.isna(y[0]):
-                        # Debug: Print coordinate transformation
-                        print(f"  Part {part}: Original ({x[0]}, {y[0]})")
+                # Check for valid (non-null, non-blank) values
+                if len(x) > 0 and len(y) > 0 and not pd.isna(x[0]) and not pd.isna(y[0]):
+                    # Normalize coordinates
+                    px, py = self.normalize_coords(x[0], y[0])
+                    positions[part] = (px, py)
 
-                        # Store position for later use in connections
-                        px, py = self.normalize_coords(x[0], y[0])
-                        print(f"  Part {part}: Normalized ({px}, {py})")
+                    # Update trail
+                    self.trails[part].append((px, py))
+                    # Only limit trail length if trail_length is specified
+                    if self.trail_length is not None and len(self.trails[part]) > self.trail_length:
+                        self.trails[part].pop(0)
 
-                        positions[part] = (px, py)
+                    # Draw trail
+                    if self.show_trails:
+                        for trail_i in range(1, len(self.trails[part])):
+                            if self.trail_length is not None:
+                                # Fade based on trail position
+                                alpha = 0.3 + 0.7 * trail_i / len(self.trails[part])
+                            else:
+                                # If unlimited trail, fade based on distance from current point
+                                distance_from_current = len(self.trails[part]) - trail_i
+                                alpha = max(0.1, 1.0 - (distance_from_current / 50.0))  # Fade out over 50 frames
 
-                        # Update trail
-                        self.trails[part].append((px, py))
-                        # Only limit trail length if trail_length is specified
-                        if self.trail_length is not None and len(self.trails[part]) > self.trail_length:
-                            self.trails[part].pop(0)
+                            color = self.colors[part]
+                            # Scale alpha to color
+                            scaled_color = tuple(int(c * alpha) for c in color)
+                            cv2.line(canvas, self.trails[part][trail_i - 1], self.trails[part][trail_i], scaled_color, 2)
 
-                        # Draw trail
-                        if self.show_trails:
-                            for trail_i in range(1, len(self.trails[part])):
-                                if self.trail_length is not None:
-                                    # Fade based on trail position
-                                    alpha = 0.3 + 0.7 * trail_i / len(self.trails[part])
-                                else:
-                                    # If unlimited trail, fade based on distance from current point
-                                    distance_from_current = len(self.trails[part]) - trail_i
-                                    alpha = max(0.1, 1.0 - (distance_from_current / 50.0))  # Fade out over 50 frames
+                    # Draw current position (larger dot)
+                    cv2.circle(canvas, (px, py), 6, self.colors[part], -1)
 
-                                color = self.colors[part]
-                                # Scale alpha to color
-                                scaled_color = tuple(int(c * alpha) for c in color)
-                                cv2.line(canvas, self.trails[part][trail_i - 1], self.trails[part][trail_i], scaled_color,
-                                         2)
-
-                        # Draw current position (larger dot)
-                        cv2.circle(canvas, (px, py), 6, self.colors[part], -1)
-
-                        # Label the dot
-                        cv2.putText(canvas, part, (px + 10, py),
-                                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, self.colors[part], 1)
+                    # Label the dot
+                    cv2.putText(canvas, part, (px + 10, py), cv2.FONT_HERSHEY_SIMPLEX, 0.5, self.colors[part], 1)
 
             # Draw connections between parts if requested
             if self.show_connections:
-                # Only draw connections if all required parts have valid positions
-                # Connect head-body-tail
+                # Connect head-body_center-tail_base (Make Spine)
                 if all(part in positions for part in ['head', 'body_center', 'tail_base']):
                     cv2.line(canvas, positions['head'], positions['body_center'], (100, 100, 100), 2)
                     cv2.line(canvas, positions['body_center'], positions['tail_base'], (100, 100, 100), 2)
 
-                # Connect ears to head
+                # Connect the ears and head as a triangle
                 if all(part in positions for part in ['left_ear', 'head', 'right_ear']):
                     cv2.line(canvas, positions['left_ear'], positions['head'], (100, 100, 100), 2)
                     cv2.line(canvas, positions['head'], positions['right_ear'], (100, 100, 100), 2)
+                    cv2.line(canvas, positions['left_ear'], positions['right_ear'], (100, 100, 100), 2)
 
                 # Connect body sides
                 if all(part in positions for part in ['left_body', 'body_center', 'right_body']):
                     cv2.line(canvas, positions['left_body'], positions['body_center'], (100, 100, 100), 2)
                     cv2.line(canvas, positions['body_center'], positions['right_body'], (100, 100, 100), 2)
+
+                # Connect body sides to ears
+                if all(part in positions for part in ['left_body', 'right_body', 'left_ear', 'right_ear']):
+                    cv2.line(canvas, positions['left_body'], positions['left_ear'], (100, 100, 100), 2)
+                    cv2.line(canvas, positions['right_body'], positions['right_ear'], (100, 100, 100), 2)
+
+                # Connect body sides to tail base
+                if all(part in positions for part in ['left_body', 'right_body', 'tail_base']):
+                    cv2.line(canvas, positions['left_body'], positions['tail_base'], (100, 100, 100), 2)
+                    cv2.line(canvas, positions['right_body'], positions['tail_base'], (100, 100, 100), 2)
 
             # Add frame counter
             cv2.putText(canvas, f"Frame: {frame_idx + 1}/{self.frames}", (20, 30),
@@ -211,15 +223,15 @@ class RodentVisualizer:
 # Example usage
 if __name__ == "__main__":
     # Replace with your actual CSV file path
-    csv_path = r"C:\Users\mbazi\Downloads\output(in).csv"  # Update with your path
+    csv_path = r"C:\Users\mbazi\Downloads\output.csv"  # Update with your path
 
     # Create visualizer with customizable trail and connection options
-    visualizer = RodentVisualizer(
+    visualizer = RodentVisualizerCV(
         csv_path,
         width=1000,
         height=800,
-        trail_length=5,  # Show last X frames of trail
-        show_trails=True,
-        show_connections=True
+        trail_length=50,  # Show last 50 frames of trail
+        show_trails=False,  # Toggle trails on/off
+        show_connections=True  # Toggle connections on/off
     )
-    visualizer.display_animation(delay=30)  # delay for debugging
+    visualizer.display_animation(delay=100)  # delay for debugging
