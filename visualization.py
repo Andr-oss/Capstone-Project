@@ -230,7 +230,7 @@ if __name__ == "__main__":
         csv_path,
         width=1000,
         height=800,
-        trail_length=50,  # Show last 50 frames of trail
+        trail_length=5,  # Show last x frames of trail
         show_trails=False,  # Toggle trails on/off
         show_connections=True  # Toggle connections on/off
     )
