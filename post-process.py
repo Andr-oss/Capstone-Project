@@ -3,7 +3,7 @@ import numpy as np
 
 # File path
 input_file = r"C:\Users\mbazi\Downloads\CollectedData_Chen.csv"
-output_file = r"C:\Users\mbazi\Downloads\output(in).csv"
+output_file = r"C:\Users\mbazi\Downloads\output.csv"
 
 # Read the CSV file
 df = pd.read_csv(input_file, header=[1, 2])  # Read headers
@@ -56,8 +56,8 @@ if all(col in df.columns for col in required_columns):
     ), axis=1)
 
     # Extract x and y coordinates from the series of tuples
-    df["Processed_Head_Center_x"] = centroids.apply(lambda x: x[0])
-    df["Processed_Head_Center_y"] = centroids.apply(lambda x: x[1])
+    df["Head_Center_x"] = centroids.apply(lambda x: x[0])
+    df["Head_Center_y"] = centroids.apply(lambda x: x[1])
 else:
     print("Error: Missing required columns", required_columns)
 
