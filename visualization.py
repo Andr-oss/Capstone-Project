@@ -4,7 +4,7 @@ import cv2
 
 
 class RodentVisualizerCV:
-    def __init__(self, csv_path, width=800, height=600, trail_length=None,
+    def __init__(self, csv_path, video_path=None, width=800, height=600, trail_length=None,
                  show_trails=True, show_connections=True, show_segmentation=True,
                  segmentation_opacity=0.3, show_labels=True, show_legend=True):
         # Load the data
@@ -33,6 +33,7 @@ class RodentVisualizerCV:
         self.segmentation_opacity = segmentation_opacity
         self.show_labels = show_labels
         self.show_legend = show_legend
+        self.video_path = video_path
 
         # Detect body parts and track original column names
         self.body_part_columns = {}  # Format: {processed_name: {"_x": "Original_X_col", "_y": "Original_Y_col"}}
@@ -95,8 +96,29 @@ class RodentVisualizerCV:
         self.trails = {part: [] for part in self.body_parts}
         self.trail_length = trail_length  # Number of frames to show in the trail (None = unlimited)
 
+        # Initialize video if path is provided
+        if self.video_path:
+            self.video_capture = cv2.VideoCapture(self.video_path)
+            if self.video_capture.isOpened():
+                self.has_video = True
+                # Get video properties
+                self.video_width = int(self.video_capture.get(cv2.CAP_PROP_FRAME_WIDTH))
+                self.video_height = int(self.video_capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
+                self.video_fps = self.video_capture.get(cv2.CAP_PROP_FPS)
+                self.video_frame_count = int(self.video_capture.get(cv2.CAP_PROP_FRAME_COUNT))
+
+                print(
+                    f"Video loaded: {self.video_width}x{self.video_height}, {self.video_fps} FPS, {self.video_frame_count} frames")
+
+                # Adjust display dimensions to match video if needed
+                if self.width == 800 and self.height == 600:  # If default dimensions weren't changed
+                    self.width = self.video_width
+                    self.height = self.video_height
+            else:
+                print(f"Warning: Could not open video file {self.video_path}")
+
     def normalize_coords(self, x, y):
-        """Convert data coordinates to pixel coordinates with bounds checking"""
+        # Convert data coordinates to pixel coordinates with bounds checking
         norm_x = int((x - self.min_x) / (self.max_x - self.min_x) * (self.width - 40) + 20)
         norm_y = int((y - self.min_y) / (self.max_y - self.min_y) * (self.height - 40) + 20)
 
@@ -106,6 +128,7 @@ class RodentVisualizerCV:
 
         return norm_x, norm_y
 
+
     def display_animation(self, delay=33):
         # Create window
         cv2.namedWindow("Rodent Movement Tracking", cv2.WINDOW_NORMAL)
@@ -113,20 +136,39 @@ class RodentVisualizerCV:
 
         processed_frames = 0
 
+        # Reset video to beginning if using video
+        if self.has_video:
+            self.video_capture.set(cv2.CAP_PROP_POS_FRAMES, 0)
+
         # Process each frame
         for frame_idx, frame_id in enumerate(sorted(self.frame_ids)):
             # Get data for current frame
             frame_data = self.data[self.data[self.frame_column] == frame_id]
             print(f"Processing frame {frame_idx + 1}/{self.frames}: {frame_id}, Data rows: {len(frame_data)}")
 
-            # Create a blank canvas
-            canvas = np.ones((self.height, self.width, 3), dtype=np.uint8) * 255
+            # Create canvas - either from video or blank
+            if self.has_video:
+                # Try to read corresponding frame from video
+                ret, video_frame = self.video_capture.read()
+                if not ret:
+                    print("Warning: Reached end of video before end of tracking data")
+                    # Use last frame or create blank canvas
+                    canvas = np.ones((self.height, self.width, 3), dtype=np.uint8) * 255
+                else:
+                    # Resize video frame if necessary
+                    if video_frame.shape[1] != self.width or video_frame.shape[0] != self.height:
+                        canvas = cv2.resize(video_frame, (self.width, self.height))
+                    else:
+                        canvas = video_frame.copy()
+            else:
+                # Use blank canvas as before
+                canvas = np.ones((self.height, self.width, 3), dtype=np.uint8) * 255
 
-            # Draw coordinate grid
-            for grid_i in range(0, self.width, 100):
-                cv2.line(canvas, (grid_i, 0), (grid_i, self.height), (240, 240, 240), 1)
-            for grid_i in range(0, self.height, 100):
-                cv2.line(canvas, (0, grid_i), (self.width, grid_i), (240, 240, 240), 1)
+                # Draw coordinate grid on blank canvas only
+                for grid_i in range(0, self.width, 100):
+                    cv2.line(canvas, (grid_i, 0), (grid_i, self.height), (240, 240, 240), 1)
+                for grid_i in range(0, self.height, 100):
+                    cv2.line(canvas, (0, grid_i), (self.width, grid_i), (240, 240, 240), 1)
 
             # Store positions for connections
             positions = {}
@@ -274,13 +316,15 @@ class RodentVisualizerCV:
 # Example usage
 if __name__ == "__main__":
     # Replace with your actual CSV file path
-    csv_path = r"C:\Users\mbazi\Downloads\output.csv"  # Update with your path
+    input_file = r"C:\Users\Bazil\Downloads\output.csv"  # Update with your path
+    video_file = r"C:\Users\Bazil\Downloads\P20221101_Video.mp4"  # Optional video
 
     # Create visualizer with customizable visualization options
     visualizer = RodentVisualizerCV(
-        csv_path,
-        width=1000,
-        height=800,
+        input_file,
+        video_file,
+        width=480,
+        height=480,
         trail_length=5,  # Show last x frames of trail
         show_trails=False,  # Toggle trails on/off
         show_connections=True,  # Toggle connections on/off
@@ -290,3 +334,6 @@ if __name__ == "__main__":
         show_legend=True  # Toggle legend on/off
     )
     visualizer.display_animation(delay=30)  # delay for debugging
+
+
+

@@ -2,20 +2,14 @@ import pandas as pd
 import numpy as np
 
 # File path
-input_file = r"C:\Users\mbazi\Downloads\CollectedData_Chen.csv"
-output_file = r"C:\Users\mbazi\Downloads\output.csv"
+input_file = r"C:\Users\Bazil\Downloads\P20221101_VideoDLC_Resnet50_Capstone-project-DLCMar8shuffle1_snapshot_040.csv"
+output_file = r"C:\Users\Bazil\Downloads\output.csv"
 
 # Read the CSV file
 df = pd.read_csv(input_file, header=[1, 2])  # Read headers
 
 # Flatten headers
 df.columns = [f"{col1}_{col2}" if pd.notna(col2) else col1 for col1, col2 in df.columns]
-
-# Drop the first two original header rows and reset index
-df = df.iloc[2:].reset_index(drop=True)
-
-# Drop first two columns
-df = df.iloc[:, 2:]
 
 # Rename frame column
 df.rename(columns={df.columns[0]: "Frame"}, inplace=True)
