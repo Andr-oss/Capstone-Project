@@ -2,8 +2,8 @@ import pandas as pd
 import numpy as np
 
 # File path
-input_file = r"C:\Users\Bazil\Downloads\P20221101_VideoDLC_Resnet50_Capstone-project-DLCMar8shuffle1_snapshot_040.csv"
-output_file = r"C:\Users\Bazil\Downloads\output.csv"
+input_file = r"C:\Users\mbazi\Downloads\CollectedData_Chen.csv"
+output_file = r"C:\Users\mbazi\Downloads\output.csv"
 
 # Read the CSV file
 df = pd.read_csv(input_file, header=[1, 2])  # Read headers

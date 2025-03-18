@@ -34,6 +34,7 @@ class RodentVisualizerCV:
         self.show_labels = show_labels
         self.show_legend = show_legend
         self.video_path = video_path
+        self.has_video = False
 
         # Detect body parts and track original column names
         self.body_part_columns = {}  # Format: {processed_name: {"_x": "Original_X_col", "_y": "Original_Y_col"}}
@@ -130,15 +131,19 @@ class RodentVisualizerCV:
 
 
     def display_animation(self, delay=33):
+
+        if self.has_video:
+            self.video_capture.set(cv2.CAP_PROP_POS_FRAMES, 0)
+            self.width = int(self.video_capture.get(cv2.CAP_PROP_FRAME_WIDTH))
+            self.height = int(self.video_capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
+            self.video_fps = self.video_capture.get(cv2.CAP_PROP_FPS)
+            self.video_frame_count = int(self.video_capture.get(cv2.CAP_PROP_FRAME_COUNT))
+
         # Create window
         cv2.namedWindow("Rodent Movement Tracking", cv2.WINDOW_NORMAL)
         cv2.resizeWindow("Rodent Movement Tracking", self.width, self.height)
 
         processed_frames = 0
-
-        # Reset video to beginning if using video
-        if self.has_video:
-            self.video_capture.set(cv2.CAP_PROP_POS_FRAMES, 0)
 
         # Process each frame
         for frame_idx, frame_id in enumerate(sorted(self.frame_ids)):
@@ -183,7 +188,7 @@ class RodentVisualizerCV:
                 y = frame_data[y_col].values
 
                 # Check for valid (non-null, non-blank) values
-                if len(x) > 0 and len(y) > 0 and not pd.isna(x[0]) and not pd.isna(y[0]):
+                if not self.has_video and len(x) > 0 and len(y) > 0 and not pd.isna(x[0]) and not pd.isna(y[0]):
                     # Normalize coordinates
                     px, py = self.normalize_coords(x[0], y[0])
                     positions[part] = (px, py)
@@ -316,8 +321,8 @@ class RodentVisualizerCV:
 # Example usage
 if __name__ == "__main__":
     # Replace with your actual CSV file path
-    input_file = r"C:\Users\Bazil\Downloads\output.csv"  # Update with your path
-    video_file = r"C:\Users\Bazil\Downloads\P20221101_Video.mp4"  # Optional video
+    input_file = r"C:\Users\mbazi\Downloads\output.csv"  # Update with your path
+    video_file = r"C:\Users\mbazi\Downloads\P20221101_Video.mp4"  # Optional video
 
     # Create visualizer with customizable visualization options
     visualizer = RodentVisualizerCV(
