@@ -16,6 +16,13 @@
                 {% csrf_token %}
                 <!-- File input to select multiple videos (visible for demo purposes) -->
                 <input type="file" id="videoUpload" name="videos" multiple accept="video/*">
+                <!-- New: Option select for processing model -->
+                <br>
+                <label for="modelOption">Select Processing Model:</label>
+                <select name="model_option" id="modelOption">
+                    <option value="deeplabcut">Deeplabcut</option>
+                    <option value="roboflow">Roboflow</option>
+                </select>
             </form>
             <!-- Other buttons -->
             <button type="button" onclick="processVideos()">Process</button>
@@ -63,9 +70,9 @@
 
         // Updated download function to download CSV data.
         function downloadVideos() {
-        // Redirect the browser to the CSV download URL.
-        window.location.href = "{% url 'download_csv' %}";
-    }
+            // Redirect the browser to the CSV download URL.
+            window.location.href = "{% url 'download_csv' %}";
+        }
     </script>
 </body>
 </html>
