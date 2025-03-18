@@ -324,8 +324,8 @@ class RodentVisualizerCV:
 # Example usage
 if __name__ == "__main__":
     # Replace with your actual CSV file path
-    input_file = r"C:\Users\Bazil\Downloads\output.csv"  # Update with your path
-    video_file = r"C:\Users\Bazil\Downloads\P20221101_Video.mp4"  # Optional video
+    input_file = r"C:\Users\Bazil\Downloads\output22.csv"  # Update with your path
+    video_file = r"C:\Users\Bazil\Downloads\f042814_Video.mp4"  # Optional video
 
     # Create visualizer with customizable visualization options
     visualizer = RodentVisualizerCV(
