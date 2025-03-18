@@ -188,11 +188,14 @@ class RodentVisualizerCV:
                 y = frame_data[y_col].values
 
                 # Check for valid (non-null, non-blank) values
-                if not self.has_video and len(x) > 0 and len(y) > 0 and not pd.isna(x[0]) and not pd.isna(y[0]):
+                if len(x) > 0 and len(y) > 0 and not pd.isna(x[0]) and not pd.isna(y[0]):
                     # Normalize coordinates
-                    px, py = self.normalize_coords(x[0], y[0])
-                    positions[part] = (px, py)
+                    if not self.has_video:
+                        px, py = self.normalize_coords(x[0], y[0])
+                    else:
+                        px, py = int(x[0]), int(y[0])
 
+                    positions[part] = (px, py)
                     # Update trail
                     self.trails[part].append((px, py))
                     # Only limit trail length if trail_length is specified
@@ -321,15 +324,15 @@ class RodentVisualizerCV:
 # Example usage
 if __name__ == "__main__":
     # Replace with your actual CSV file path
-    input_file = r"C:\Users\mbazi\Downloads\output.csv"  # Update with your path
-    video_file = r"C:\Users\mbazi\Downloads\P20221101_Video.mp4"  # Optional video
+    input_file = r"C:\Users\Bazil\Downloads\output.csv"  # Update with your path
+    video_file = r"C:\Users\Bazil\Downloads\P20221101_Video.mp4"  # Optional video
 
     # Create visualizer with customizable visualization options
     visualizer = RodentVisualizerCV(
         input_file,
         video_file,
-        width=480,
-        height=480,
+        width=960,
+        height=960,
         trail_length=5,  # Show last x frames of trail
         show_trails=False,  # Toggle trails on/off
         show_connections=True,  # Toggle connections on/off
