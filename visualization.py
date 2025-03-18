@@ -56,7 +56,7 @@ class RodentVisualizerCV:
         # Assign colors to each body part (BGR format for OpenCV)
         self.colors = {}
         color_list = [
-            (0, 0, 255),  # Red (head)
+            (0, 0, 255),  # Red (Nose)
             (0, 255, 0),  # Green (body_center)
             (255, 0, 0),  # Blue (tail_base)
             (255, 0, 255),  # Magenta (right_ear)
@@ -85,7 +85,7 @@ class RodentVisualizerCV:
         self.max_y = self.data[y_cols].max().max()
         print(f"Data bounds: X={self.min_x} to {self.max_x}, Y={self.min_y} to {self.max_y}")
 
-        # Add some padding to the bounds
+        #Add some padding to the bounds
         pad_x = (self.max_x - self.min_x) * 0.1
         pad_y = (self.max_y - self.min_y) * 0.1
         self.min_x -= pad_x
@@ -130,7 +130,7 @@ class RodentVisualizerCV:
         return norm_x, norm_y
 
 
-    def display_animation(self, delay=33):
+    def display_animation(self, delay=30):
 
         if self.has_video:
             self.video_capture.set(cv2.CAP_PROP_POS_FRAMES, 0)
@@ -219,11 +219,11 @@ class RodentVisualizerCV:
                         ], np.int32)
                         cv2.fillPoly(overlay, [body_polygon], self.segmentation_colors['body'])
 
-                # Fill ear-head triangle
-                if all(part in positions for part in ['left_ear', 'head', 'right_ear']):
+                # Fill ear-nose triangle
+                if all(part in positions for part in ['left_ear', 'nose', 'right_ear']):
                     ear_triangle = np.array([
                         positions['left_ear'],
-                        positions['head'],
+                        positions['nose'],
                         positions['right_ear']
                     ], np.int32)
                     cv2.fillPoly(overlay, [ear_triangle], self.segmentation_colors['ear'])
@@ -233,15 +233,15 @@ class RodentVisualizerCV:
 
             # Draw connections if requested (middle layer)
             if self.show_connections:
-                # Connect head-body_center-tail_base (Make Spine)
-                if all(part in positions for part in ['head', 'body_center', 'tail_base']):
-                    cv2.line(canvas, positions['head'], positions['body_center'], (100, 100, 100), 2)
+                # Connect nose-body_center-tail_base (Make Spine)
+                if all(part in positions for part in ['nose', 'body_center', 'tail_base']):
+                    cv2.line(canvas, positions['nose'], positions['body_center'], (100, 100, 100), 2)
                     cv2.line(canvas, positions['body_center'], positions['tail_base'], (100, 100, 100), 2)
 
-                # Connect the ears and head as a triangle
-                if all(part in positions for part in ['left_ear', 'head', 'right_ear']):
-                    cv2.line(canvas, positions['left_ear'], positions['head'], (100, 100, 100), 2)
-                    cv2.line(canvas, positions['head'], positions['right_ear'], (100, 100, 100), 2)
+                # Connect the ears and nose as a triangle
+                if all(part in positions for part in ['left_ear', 'nose', 'right_ear']):
+                    cv2.line(canvas, positions['left_ear'], positions['nose'], (100, 100, 100), 2)
+                    cv2.line(canvas, positions['nose'], positions['right_ear'], (100, 100, 100), 2)
                     cv2.line(canvas, positions['left_ear'], positions['right_ear'], (100, 100, 100), 2)
 
                 # Connect body sides
@@ -282,7 +282,7 @@ class RodentVisualizerCV:
                                      2)
 
                     # Draw current position (larger dot)
-                    cv2.circle(canvas, (px, py), 6, self.colors[part], -1)
+                    cv2.circle(canvas, (px, py), 3, self.colors[part], -1)
 
                     # Label the dot
                     if self.show_labels:
@@ -324,8 +324,8 @@ class RodentVisualizerCV:
 # Example usage
 if __name__ == "__main__":
     # Replace with your actual CSV file path
-    input_file = r"C:\Users\Bazil\Downloads\output22.csv"  # Update with your path
-    video_file = r"C:\Users\Bazil\Downloads\f042814_Video.mp4"  # Optional video
+    input_file = r"C:\Users\mbazi\Downloads\output22.csv"  # Update with your path
+    video_file = r"C:\Users\mbazi\Downloads\f042814_Video.mp4"  # Optional video
 
     # Create visualizer with customizable visualization options
     visualizer = RodentVisualizerCV(
@@ -341,7 +341,7 @@ if __name__ == "__main__":
         show_labels=False,  # Toggle labels on/off
         show_legend=True  # Toggle legend on/off
     )
-    visualizer.display_animation(delay=30)  # delay for debugging
+    visualizer.display_animation(delay=60)  # delay for debugging
 
 
 
