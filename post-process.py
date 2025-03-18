@@ -1,109 +1,133 @@
 import pandas as pd
 import numpy as np
 
-# File path
-input_file = r"C:\Users\Bazil\Downloads\CollectedData_Chen (1).csv"
-output_file = r"C:\Users\Bazil\Downloads\output.csv"
+# File paths
+input_file = r"C:\Users\mbazi\Downloads\CollectedData_Chen.csv"
+output_file = r"C:\Users\mbazi\Downloads\output.csv"
 
-# Read the CSV file
-df = pd.read_csv(input_file, header=[1, 2])  # Read headers
+# Read the CSV file with multi-level headers
+df = pd.read_csv(input_file, header=[1, 2])
 
-# Flatten headers
+# Make a copy of the original multi-index columns for reference
+original_columns = df.columns.tolist()
+
+# Flatten the multi-level column headers
 df.columns = [f"{col1}_{col2}" if pd.notna(col2) else col1 for col1, col2 in df.columns]
 
-# Rename frame column
+# Rename first column to "Frame"
 df.rename(columns={df.columns[0]: "Frame"}, inplace=True)
 
 print("Columns:", df.columns.tolist())
 
 
-# Define function to find center of three points
+# Function to calculate centroid of three points
 def find_centroid(p1, p2, p3):
-    # Check if any value is None or NaN
+    # Check if any coordinates are missing
     if (pd.isna(p1[0]) or pd.isna(p1[1]) or
             pd.isna(p2[0]) or pd.isna(p2[1]) or
             pd.isna(p3[0]) or pd.isna(p3[1])):
         return np.nan, np.nan
 
+    # Calculate centroid coordinates
     x = round((float(p1[0]) + float(p2[0]) + float(p3[0])) / 3, 2)
     y = round((float(p1[1]) + float(p2[1]) + float(p3[1])) / 3, 2)
     return x, y
 
 
-def estimate_missing_part(missing_part, current_frame):
-    """
-    Estimates coordinates for a missing body part based on anatomical relationships.
+# Function to estimate missing body parts based on anatomical relationships
+def estimate_missing_part(part, row):
+    # Check which part we're estimating
+    if part == 'Right_Ear':
+        if not (pd.isna(row["Nose_x"]) or pd.isna(row["Left_Ear_x"])):
+            # Mirror Left Ear across Nose
+            return (2 * row["Nose_x"] - row["Left_Ear_x"],
+                    2 * row["Nose_y"] - row["Left_Ear_y"])
 
-    Parameters:
-    missing_part (str): Name of the missing body part (e.g., 'Right_Ear')
-    current_frame (pd.Series): A row from the DataFrame containing body part coordinates
+    elif part == 'Left_Ear':
+        if not (pd.isna(row["Nose_x"]) or pd.isna(row["Right_Ear_x"])):
+            # Mirror Right Ear across Nose
+            return (2 * row["Nose_x"] - row["Right_Ear_x"],
+                    2 * row["Nose_y"] - row["Right_Ear_y"])
 
-    Returns:
-    tuple: (estimated_x, estimated_y)
-    """
+    elif part == 'Nose':
+        if not (pd.isna(row["Left_Ear_x"]) or pd.isna(row["Right_Ear_x"])):
+            # Average of ears
+            return ((row["Left_Ear_x"] + row["Right_Ear_x"]) / 2,
+                    (row["Left_Ear_y"] + row["Right_Ear_y"]) / 2)
 
-    # Helper function to get coordinates
-    def get_coords(part):
-        return current_frame[('Chen', part, 'x')], current_frame[('Chen', part, 'y')]
+    elif part == 'Right_Body':
+        if not (pd.isna(row["Body_Center_x"]) or pd.isna(row["Left_Body_x"])):
+            # Mirror Left Body across Body Center
+            return (2 * row["Body_Center_x"] - row["Left_Body_x"],
+                    2 * row["Body_Center_y"] - row["Left_Body_y"])
 
-    match missing_part:
-        case 'Right_Ear':
-            hx, hy = get_coords('Head')
-            lx, ly = get_coords('Left_Ear')
-            return 2 * hx - lx, 2 * hy - ly  # Mirror across head
-        case 'Left_Ear':
-            hx, hy = get_coords('Head')
-            rx, ry = get_coords('Right_Ear')
-            return 2 * hx - rx, 2 * hy - ry
-        case 'Right_Body':
-            cx, cy = get_coords('Body_Center')
-            lx, ly = get_coords('Left_Body')
-            return 2 * cx - lx, 2 * cy - ly
-        case 'Left_Body':
-            cx, cy = get_coords('Body_Center')
-            rx, ry = get_coords('Right_Body')
-            return 2 * cx - rx, 2 * cy - ry
-        case 'Tail_Base':
-            # Estimate based on body center and previous position (simple approach)
-            cx, cy = get_coords('Body_Center')
-            return cx, cy + 10  # Adjust offset based on your data
-        case 'Nose':
-            # Average of ears when head is missing
-            lx, ly = get_coords('Left_Ear')
-            rx, ry = get_coords('Right_Ear')
-            return (lx + rx) / 2, (ly + ry) / 2
+    elif part == 'Left_Body':
+        if not (pd.isna(row["Body_Center_x"]) or pd.isna(row["Right_Body_x"])):
+            # Mirror Right Body across Body Center
+            return (2 * row["Body_Center_x"] - row["Right_Body_x"],
+                    2 * row["Body_Center_y"] - row["Right_Body_y"])
+
+    elif part == 'Tail_Base':
+        if not pd.isna(row["Body_Center_x"]):
+            # Estimate based on body center
+            return (row["Body_Center_x"], row["Body_Center_y"] + 10)
+
+    # Return NaN if estimation is not possible
+    return np.nan, np.nan
 
 
-# Ensure correct column names before applying function
-required_columns = ["Head_x", "Head_y", "Left_Ear_x", "Left_Ear_y", "Right_Ear_x", "Right_Ear_y"]
-if all(col in df.columns for col in required_columns):
+# Process all body part columns
+body_parts = ["Nose", "Left_Ear", "Right_Ear", "Body_Center", "Left_Body", "Right_Body", "Tail_Base"]
 
-    # Interpolate missing values in the required columns
-    for col in required_columns:
-        # Convert to numeric, replacing empty strings with NaN
-        df[col] = pd.to_numeric(df[col].replace('', np.nan), errors='coerce')
-        # Use pandas interpolate method to fill single missing values
-        df[col] = df[col].interpolate(method='linear')
-        df[col] = df[col].round(2)
+# First, convert all coordinate columns to numeric
+for part in body_parts:
+    for suffix in ['_x', '_y']:
+        col = f"{part}{suffix}"
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col].replace('', np.nan), errors='coerce')
 
-    # Calculate centroids
-    centroids = df.apply(lambda row: find_centroid(
-        (row["Head_x"], row["Head_y"]),
-        (row["Left_Ear_x"], row["Left_Ear_y"]),
-        (row["Right_Ear_x"], row["Right_Ear_y"])
-    ), axis=1)
+# Apply basic interpolation first
+for part in body_parts:
+    for suffix in ['_x', '_y']:
+        col = f"{part}{suffix}"
+        if col in df.columns:
+            # Interpolate linearly where possible
+            df[col] = df[col].interpolate(method='linear', limit=3)  # Limit consecutive gaps
 
-    # Extract x and y coordinates from the series of tuples
-    df["Head_Center_x"] = centroids.apply(lambda x: x[0])
-    df["Head_Center_y"] = centroids.apply(lambda x: x[1])
-else:
-    print("Error: Missing required columns", required_columns)
+# Then estimate missing values that couldn't be interpolated
+for idx, row in df.iterrows():
+    for part in body_parts:
+        x_col = f"{part}_x"
+        y_col = f"{part}_y"
+
+        if x_col in df.columns and y_col in df.columns:
+            if pd.isna(row[x_col]) or pd.isna(row[y_col]):
+                # Try to estimate the missing coordinates
+                est_x, est_y = estimate_missing_part(part, row)
+
+                if not (pd.isna(est_x) or pd.isna(est_y)):
+                    df.at[idx, x_col] = est_x
+                    df.at[idx, y_col] = est_y
+
+# Calculate head centroids for each row using Nose and Ears
+df["Head_Center_x"] = np.nan
+df["Head_Center_y"] = np.nan
+
+for idx, row in df.iterrows():
+    if not (pd.isna(row["Nose_x"]) or pd.isna(row["Left_Ear_x"]) or pd.isna(row["Right_Ear_x"])):
+        x, y = find_centroid(
+            (row["Nose_x"], row["Nose_y"]),
+            (row["Left_Ear_x"], row["Left_Ear_y"]),
+            (row["Right_Ear_x"], row["Right_Ear_y"])
+        )
+        df.at[idx, "Head_Center_x"] = x
+        df.at[idx, "Head_Center_y"] = y
 
 # Round all numerical columns to 2 decimal places
 numeric_columns = df.select_dtypes(include=[np.number]).columns
 df[numeric_columns] = df[numeric_columns].round(2)
 
-# Save the processed file
+# Save processed data
 df.to_csv(output_file, index=False)
 
 print(df.head())

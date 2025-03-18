@@ -324,22 +324,23 @@ class RodentVisualizerCV:
 # Example usage
 if __name__ == "__main__":
     # Replace with your actual CSV file path
-    input_file = r"C:\Users\Bazil\Downloads\output22.csv"  # Update with your path
-    video_file = r"C:\Users\Bazil\Downloads\f042814_Video.mp4"  # Optional video
+    input_file = r"C:\Users\mbazi\Downloads\output22.csv"  # Update with your path
+    video_file = r"C:\Users\mbazi\Downloads\f042814_Video.mp4"  # Optional video
+    #video_file = r"C:\Users\mbazi\Downloads\P20221101_Video.mp4"  # Optional video
 
     # Create visualizer with customizable visualization options
     visualizer = RodentVisualizerCV(
         input_file,
         video_file,
-        width=960,
-        height=960,
+        width=480,
+        height=480,
         trail_length=5,  # Show last x frames of trail
         show_trails=False,  # Toggle trails on/off
         show_connections=True,  # Toggle connections on/off
         show_segmentation=True,  # Toggle segmentation fill on/off
         segmentation_opacity=0.5,  # Opacity of segmentation fill (0-1)
         show_labels=False,  # Toggle labels on/off
-        show_legend=True  # Toggle legend on/off
+        show_legend=False  # Toggle legend on/off
     )
     visualizer.display_animation(delay=60)  # delay for debugging
 
