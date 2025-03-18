@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy as np
 
-
 def circle_intersections(p1, r1, p2, r2):
     """
     Compute the intersections of two circles.

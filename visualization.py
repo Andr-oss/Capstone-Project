@@ -34,6 +34,7 @@ class RodentVisualizerCV:
         self.show_labels = show_labels
         self.show_legend = show_legend
         self.video_path = video_path
+        self.has_video = False
 
         # Detect body parts and track original column names
         self.body_part_columns = {}  # Format: {processed_name: {"_x": "Original_X_col", "_y": "Original_Y_col"}}
@@ -55,7 +56,7 @@ class RodentVisualizerCV:
         # Assign colors to each body part (BGR format for OpenCV)
         self.colors = {}
         color_list = [
-            (0, 0, 255),  # Red (head)
+            (0, 0, 255),  # Red (Nose)
             (0, 255, 0),  # Green (body_center)
             (255, 0, 0),  # Blue (tail_base)
             (255, 0, 255),  # Magenta (right_ear)
@@ -84,7 +85,7 @@ class RodentVisualizerCV:
         self.max_y = self.data[y_cols].max().max()
         print(f"Data bounds: X={self.min_x} to {self.max_x}, Y={self.min_y} to {self.max_y}")
 
-        # Add some padding to the bounds
+        #Add some padding to the bounds
         pad_x = (self.max_x - self.min_x) * 0.1
         pad_y = (self.max_y - self.min_y) * 0.1
         self.min_x -= pad_x
@@ -129,16 +130,20 @@ class RodentVisualizerCV:
         return norm_x, norm_y
 
 
-    def display_animation(self, delay=33):
+    def display_animation(self, delay=30):
+
+        if self.has_video:
+            self.video_capture.set(cv2.CAP_PROP_POS_FRAMES, 0)
+            self.width = int(self.video_capture.get(cv2.CAP_PROP_FRAME_WIDTH))
+            self.height = int(self.video_capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
+            self.video_fps = self.video_capture.get(cv2.CAP_PROP_FPS)
+            self.video_frame_count = int(self.video_capture.get(cv2.CAP_PROP_FRAME_COUNT))
+
         # Create window
         cv2.namedWindow("Rodent Movement Tracking", cv2.WINDOW_NORMAL)
         cv2.resizeWindow("Rodent Movement Tracking", self.width, self.height)
 
         processed_frames = 0
-
-        # Reset video to beginning if using video
-        if self.has_video:
-            self.video_capture.set(cv2.CAP_PROP_POS_FRAMES, 0)
 
         # Process each frame
         for frame_idx, frame_id in enumerate(sorted(self.frame_ids)):
@@ -185,9 +190,12 @@ class RodentVisualizerCV:
                 # Check for valid (non-null, non-blank) values
                 if len(x) > 0 and len(y) > 0 and not pd.isna(x[0]) and not pd.isna(y[0]):
                     # Normalize coordinates
-                    px, py = self.normalize_coords(x[0], y[0])
-                    positions[part] = (px, py)
+                    if not self.has_video:
+                        px, py = self.normalize_coords(x[0], y[0])
+                    else:
+                        px, py = int(x[0]), int(y[0])
 
+                    positions[part] = (px, py)
                     # Update trail
                     self.trails[part].append((px, py))
                     # Only limit trail length if trail_length is specified
@@ -211,11 +219,11 @@ class RodentVisualizerCV:
                         ], np.int32)
                         cv2.fillPoly(overlay, [body_polygon], self.segmentation_colors['body'])
 
-                # Fill ear-head triangle
-                if all(part in positions for part in ['left_ear', 'head', 'right_ear']):
+                # Fill ear-nose triangle
+                if all(part in positions for part in ['left_ear', 'nose', 'right_ear']):
                     ear_triangle = np.array([
                         positions['left_ear'],
-                        positions['head'],
+                        positions['nose'],
                         positions['right_ear']
                     ], np.int32)
                     cv2.fillPoly(overlay, [ear_triangle], self.segmentation_colors['ear'])
@@ -225,15 +233,15 @@ class RodentVisualizerCV:
 
             # Draw connections if requested (middle layer)
             if self.show_connections:
-                # Connect head-body_center-tail_base (Make Spine)
-                if all(part in positions for part in ['head', 'body_center', 'tail_base']):
-                    cv2.line(canvas, positions['head'], positions['body_center'], (100, 100, 100), 2)
+                # Connect nose-body_center-tail_base (Make Spine)
+                if all(part in positions for part in ['nose', 'body_center', 'tail_base']):
+                    cv2.line(canvas, positions['nose'], positions['body_center'], (100, 100, 100), 2)
                     cv2.line(canvas, positions['body_center'], positions['tail_base'], (100, 100, 100), 2)
 
-                # Connect the ears and head as a triangle
-                if all(part in positions for part in ['left_ear', 'head', 'right_ear']):
-                    cv2.line(canvas, positions['left_ear'], positions['head'], (100, 100, 100), 2)
-                    cv2.line(canvas, positions['head'], positions['right_ear'], (100, 100, 100), 2)
+                # Connect the ears and nose as a triangle
+                if all(part in positions for part in ['left_ear', 'nose', 'right_ear']):
+                    cv2.line(canvas, positions['left_ear'], positions['nose'], (100, 100, 100), 2)
+                    cv2.line(canvas, positions['nose'], positions['right_ear'], (100, 100, 100), 2)
                     cv2.line(canvas, positions['left_ear'], positions['right_ear'], (100, 100, 100), 2)
 
                 # Connect body sides
@@ -274,7 +282,7 @@ class RodentVisualizerCV:
                                      2)
 
                     # Draw current position (larger dot)
-                    cv2.circle(canvas, (px, py), 6, self.colors[part], -1)
+                    cv2.circle(canvas, (px, py), 3, self.colors[part], -1)
 
                     # Label the dot
                     if self.show_labels:
@@ -316,8 +324,9 @@ class RodentVisualizerCV:
 # Example usage
 if __name__ == "__main__":
     # Replace with your actual CSV file path
-    input_file = r"C:\Users\Bazil\Downloads\output.csv"  # Update with your path
-    video_file = r"C:\Users\Bazil\Downloads\P20221101_Video.mp4"  # Optional video
+    input_file = r"C:\Users\mbazi\Downloads\output22.csv"  # Update with your path
+    video_file = r"C:\Users\mbazi\Downloads\f042814_Video.mp4"  # Optional video
+    #video_file = r"C:\Users\mbazi\Downloads\P20221101_Video.mp4"  # Optional video
 
     # Create visualizer with customizable visualization options
     visualizer = RodentVisualizerCV(
@@ -331,9 +340,9 @@ if __name__ == "__main__":
         show_segmentation=True,  # Toggle segmentation fill on/off
         segmentation_opacity=0.5,  # Opacity of segmentation fill (0-1)
         show_labels=False,  # Toggle labels on/off
-        show_legend=True  # Toggle legend on/off
+        show_legend=False  # Toggle legend on/off
     )
-    visualizer.display_animation(delay=30)  # delay for debugging
+    visualizer.display_animation(delay=60)  # delay for debugging
 
 
 
