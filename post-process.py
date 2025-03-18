@@ -2,8 +2,8 @@ import pandas as pd
 import numpy as np
 
 # File path
-input_file = r"C:\Users\mbazi\Downloads\CollectedData_Chen.csv"
-output_file = r"C:\Users\mbazi\Downloads\output.csv"
+input_file = r"C:\Users\Bazil\Downloads\CollectedData_Chen (1).csv"
+output_file = r"C:\Users\Bazil\Downloads\output.csv"
 
 # Read the CSV file
 df = pd.read_csv(input_file, header=[1, 2])  # Read headers
@@ -28,6 +28,50 @@ def find_centroid(p1, p2, p3):
     x = round((float(p1[0]) + float(p2[0]) + float(p3[0])) / 3, 2)
     y = round((float(p1[1]) + float(p2[1]) + float(p3[1])) / 3, 2)
     return x, y
+
+
+def estimate_missing_part(missing_part, current_frame):
+    """
+    Estimates coordinates for a missing body part based on anatomical relationships.
+
+    Parameters:
+    missing_part (str): Name of the missing body part (e.g., 'Right_Ear')
+    current_frame (pd.Series): A row from the DataFrame containing body part coordinates
+
+    Returns:
+    tuple: (estimated_x, estimated_y)
+    """
+
+    # Helper function to get coordinates
+    def get_coords(part):
+        return current_frame[('Chen', part, 'x')], current_frame[('Chen', part, 'y')]
+
+    match missing_part:
+        case 'Right_Ear':
+            hx, hy = get_coords('Head')
+            lx, ly = get_coords('Left_Ear')
+            return 2 * hx - lx, 2 * hy - ly  # Mirror across head
+        case 'Left_Ear':
+            hx, hy = get_coords('Head')
+            rx, ry = get_coords('Right_Ear')
+            return 2 * hx - rx, 2 * hy - ry
+        case 'Right_Body':
+            cx, cy = get_coords('Body_Center')
+            lx, ly = get_coords('Left_Body')
+            return 2 * cx - lx, 2 * cy - ly
+        case 'Left_Body':
+            cx, cy = get_coords('Body_Center')
+            rx, ry = get_coords('Right_Body')
+            return 2 * cx - rx, 2 * cy - ry
+        case 'Tail_Base':
+            # Estimate based on body center and previous position (simple approach)
+            cx, cy = get_coords('Body_Center')
+            return cx, cy + 10  # Adjust offset based on your data
+        case 'Nose':
+            # Average of ears when head is missing
+            lx, ly = get_coords('Left_Ear')
+            rx, ry = get_coords('Right_Ear')
+            return (lx + rx) / 2, (ly + ry) / 2
 
 
 # Ensure correct column names before applying function
