@@ -76,6 +76,9 @@ def estimate_missing_part(part, row):
     return np.nan, np.nan
 
 
+
+
+################################# Processing starts here ################################
 # Process all body part columns
 body_parts = ["Nose", "Left_Ear", "Right_Ear", "Body_Center", "Left_Body", "Right_Body", "Tail_Base"]
 
