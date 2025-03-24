@@ -2,8 +2,8 @@ import pandas as pd
 import numpy as np
 
 # File paths
-input_file = r"C:\Users\mbazi\Downloads\CollectedData_Chen.csv"
-output_file = r"C:\Users\mbazi\Downloads\output.csv"
+input_file = r"Macintosh HD\Users\lionkk\Downloads\CollectedData_Chen.csv"
+output_file = r"Macintosh HD\Users\lionkk\Downloads\ProcessedData_Chen.csv"
 
 # Read the CSV file with multi-level headers
 df = pd.read_csv(input_file, header=[1, 2])
