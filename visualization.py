@@ -47,7 +47,7 @@ class RodentVisualizerCV:
         self.show_labels = show_labels
         self.show_legend = show_legend
         self.video_path = video_path
-        self.has_video = False
+        #self.has_video = False
 
         # Detect body parts and track original column names
         self.body_part_columns = {}  # Format: {processed_name: {"_x": "Original_X_col", "_y": "Original_Y_col"}}
@@ -115,7 +115,7 @@ class RodentVisualizerCV:
         if self.video_path:
             self.video_capture = cv2.VideoCapture(self.video_path)
             if self.video_capture.isOpened():
-                self.has_video = True
+                #self.has_video = True
                 # Get video properties
                 self.video_width = int(self.video_capture.get(cv2.CAP_PROP_FRAME_WIDTH))
                 self.video_height = int(self.video_capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -133,7 +133,7 @@ class RodentVisualizerCV:
 
     def display_animation(self, delay=30):
 
-        if self.has_video:
+        if self.video_path:
             self.video_capture.set(cv2.CAP_PROP_POS_FRAMES, 0)
             self.width = int(self.video_capture.get(cv2.CAP_PROP_FRAME_WIDTH))
             self.height = int(self.video_capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -153,7 +153,7 @@ class RodentVisualizerCV:
             print(f"Processing frame {frame_idx + 1}/{self.frames}: {frame_id}, Data rows: {len(frame_data)}")
 
             # Create canvas - either from video or blank
-            if self.has_video:
+            if self.video_path:
                 # Try to read corresponding frame from video
                 ret, video_frame = self.video_capture.read()
                 if not ret:
@@ -191,8 +191,8 @@ class RodentVisualizerCV:
                 # Check for valid (non-null, non-blank) values
                 if len(x) > 0 and len(y) > 0 and not pd.isna(x[0]) and not pd.isna(y[0]):
                     # Normalize coordinates
-                    if not self.has_video:
-                        px, py = self.normalize_coords(x[0], y[0])
+                    if not self.video_path:
+                        px, py = normalize_coords(self, x[0], y[0])
                     else:
                         px, py = int(x[0]), int(y[0])
 
