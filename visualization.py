@@ -3,6 +3,17 @@ import numpy as np
 import cv2
 
 
+def normalize_coords(self, x, y):
+    # Convert data coordinates to pixel coordinates with bounds checking
+    norm_x = int((x - self.min_x) / (self.max_x - self.min_x) * (self.width - 40) + 20)
+    norm_y = int((y - self.min_y) / (self.max_y - self.min_y) * (self.height - 40) + 20)
+
+    # Ensure within bounds
+    norm_x = max(0, min(norm_x, self.width - 1))
+    norm_y = max(0, min(norm_y, self.height - 1))
+
+    return norm_x, norm_y
+
 class RodentVisualizerCV:
     def __init__(self, csv_path, video_path=None, width=800, height=600, trail_length=None,
                  show_trails=False, show_trajectory=True, trajectory_opacity=0.3, show_connections=True, show_segmentation=True,
@@ -119,18 +130,6 @@ class RodentVisualizerCV:
                     self.height = self.video_height
             else:
                 print(f"Warning: Could not open video file {self.video_path}")
-
-    def normalize_coords(self, x, y):
-        # Convert data coordinates to pixel coordinates with bounds checking
-        norm_x = int((x - self.min_x) / (self.max_x - self.min_x) * (self.width - 40) + 20)
-        norm_y = int((y - self.min_y) / (self.max_y - self.min_y) * (self.height - 40) + 20)
-
-        # Ensure within bounds
-        norm_x = max(0, min(norm_x, self.width - 1))
-        norm_y = max(0, min(norm_y, self.height - 1))
-
-        return norm_x, norm_y
-
 
     def display_animation(self, delay=30):
 
