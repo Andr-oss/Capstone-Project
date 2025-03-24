@@ -3,10 +3,21 @@ import numpy as np
 import cv2
 
 
+def normalize_coords(self, x, y):
+    # Convert data coordinates to pixel coordinates with bounds checking
+    norm_x = int((x - self.min_x) / (self.max_x - self.min_x) * (self.width - 40) + 20)
+    norm_y = int((y - self.min_y) / (self.max_y - self.min_y) * (self.height - 40) + 20)
+
+    # Ensure within bounds
+    norm_x = max(0, min(norm_x, self.width - 1))
+    norm_y = max(0, min(norm_y, self.height - 1))
+
+    return norm_x, norm_y
+
 class RodentVisualizerCV:
     def __init__(self, csv_path, video_path=None, width=800, height=600, trail_length=None,
-                 show_trails=True, show_connections=True, show_segmentation=True,
-                 segmentation_opacity=0.3, show_labels=True, show_legend=True):
+                 show_trails=False, show_trajectory=True, trajectory_opacity=0.3, show_connections=True, show_segmentation=True,
+                 segmentation_opacity=0.5, show_labels=True, show_legend=True):
         # Load the data
         self.data = pd.read_csv(csv_path)
 
@@ -28,6 +39,8 @@ class RodentVisualizerCV:
 
         # Visualization toggles
         self.show_trails = show_trails
+        self.show_trajectory = show_trajectory
+        self.trajectory_opacity = trajectory_opacity
         self.show_connections = show_connections
         self.show_segmentation = show_segmentation
         self.segmentation_opacity = segmentation_opacity
@@ -96,6 +109,7 @@ class RodentVisualizerCV:
         # Set up the trail data for each part
         self.trails = {part: [] for part in self.body_parts}
         self.trail_length = trail_length  # Number of frames to show in the trail (None = unlimited)
+        self.body_centroid_trajectory = []  # Permanent trajectory that never fades
 
         # Initialize video if path is provided
         if self.video_path:
@@ -108,8 +122,7 @@ class RodentVisualizerCV:
                 self.video_fps = self.video_capture.get(cv2.CAP_PROP_FPS)
                 self.video_frame_count = int(self.video_capture.get(cv2.CAP_PROP_FRAME_COUNT))
 
-                print(
-                    f"Video loaded: {self.video_width}x{self.video_height}, {self.video_fps} FPS, {self.video_frame_count} frames")
+                print(f"Video loaded: {self.video_width}x{self.video_height}, {self.video_fps} FPS, {self.video_frame_count} frames")
 
                 # Adjust display dimensions to match video if needed
                 if self.width == 800 and self.height == 600:  # If default dimensions weren't changed
@@ -117,18 +130,6 @@ class RodentVisualizerCV:
                     self.height = self.video_height
             else:
                 print(f"Warning: Could not open video file {self.video_path}")
-
-    def normalize_coords(self, x, y):
-        # Convert data coordinates to pixel coordinates with bounds checking
-        norm_x = int((x - self.min_x) / (self.max_x - self.min_x) * (self.width - 40) + 20)
-        norm_y = int((y - self.min_y) / (self.max_y - self.min_y) * (self.height - 40) + 20)
-
-        # Ensure within bounds
-        norm_x = max(0, min(norm_x, self.width - 1))
-        norm_y = max(0, min(norm_y, self.height - 1))
-
-        return norm_x, norm_y
-
 
     def display_animation(self, delay=30):
 
@@ -278,8 +279,27 @@ class RodentVisualizerCV:
                             color = self.colors[part]
                             # Scale alpha to color
                             scaled_color = tuple(int(c * alpha) for c in color)
-                            cv2.line(canvas, self.trails[part][trail_i - 1], self.trails[part][trail_i], scaled_color,
-                                     2)
+                            cv2.line(canvas, self.trails[part][trail_i - 1], self.trails[part][trail_i], scaled_color,2)
+
+                    if self.show_trajectory:
+                        # Calculate centroid of body parts if all three are present
+                        if all(part in positions for part in ['body_center', 'left_body', 'right_body']):
+                            # Calculate centroid (average position)
+                            centroid_x = int((positions['body_center'][0] + positions['left_body'][0] +
+                                              positions['right_body'][0]) / 3)
+                            centroid_y = int((positions['body_center'][1] + positions['left_body'][1] +
+                                              positions['right_body'][1]) / 3)
+                            centroid_position = (centroid_x, centroid_y)
+                            # Add to permanent trajectory
+                            self.body_centroid_trajectory.append(centroid_position)
+                        # Draw the complete trajectory
+                        if len(self.body_centroid_trajectory) > 1:
+                            # Create a transparent overlay for the trajectory
+                            trajectory_overlay = np.zeros_like(canvas)
+                            # Draw the trajectory on the overlay
+                            trajectory_points = np.array(self.body_centroid_trajectory, dtype=np.int32)
+                            cv2.polylines(trajectory_overlay, [trajectory_points], False, (0, 255, 0), 2)
+                            cv2.addWeighted(trajectory_overlay, self.trajectory_opacity, canvas, 1.0, 0, canvas)
 
                     # Draw current position (larger dot)
                     cv2.circle(canvas, (px, py), 3, self.colors[part], -1)
@@ -334,15 +354,17 @@ if __name__ == "__main__":
         video_file,
         width=480,
         height=480,
-        trail_length=5,  # Show last x frames of trail
-        show_trails=False,  # Toggle trails on/off
-        show_connections=True,  # Toggle connections on/off
-        show_segmentation=True,  # Toggle segmentation fill on/off
+        trail_length=50,  # Show last x frames of trail
+        show_trails=False,
+        show_trajectory=True,
+        trajectory_opacity=0.3,
+        show_connections=True,
+        show_segmentation=True,
         segmentation_opacity=0.5,  # Opacity of segmentation fill (0-1)
-        show_labels=False,  # Toggle labels on/off
-        show_legend=False  # Toggle legend on/off
+        show_labels=False,
+        show_legend=False
     )
-    visualizer.display_animation(delay=60)  # delay for debugging
+    visualizer.display_animation(delay=30)  # delay for debugging
 
 
 

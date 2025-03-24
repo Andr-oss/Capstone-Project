@@ -7,6 +7,7 @@ video_path = r'C:\Users\mbazi\Downloads\P20221101_Video.mp4'   # Replace with yo
 
 #load yolo model
 model = YOLO('yolov8n.pt')
+#model = YOLO('snapshot-best-300.pt')
 
 #load video
 cap = cv2.VideoCapture(video_path)
