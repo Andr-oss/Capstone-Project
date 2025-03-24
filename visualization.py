@@ -5,8 +5,8 @@ import cv2
 
 class RodentVisualizerCV:
     def __init__(self, csv_path, video_path=None, width=800, height=600, trail_length=None,
-                 show_trails=False, show_track=True, show_connections=True, show_segmentation=True,
-                 segmentation_opacity=0.3, show_labels=True, show_legend=True):
+                 show_trails=False, show_trajectory=True, trajectory_opacity=0.3, show_connections=True, show_segmentation=True,
+                 segmentation_opacity=0.5, show_labels=True, show_legend=True):
         # Load the data
         self.data = pd.read_csv(csv_path)
 
@@ -28,7 +28,8 @@ class RodentVisualizerCV:
 
         # Visualization toggles
         self.show_trails = show_trails
-        self.show_track = show_track
+        self.show_trajectory = show_trajectory
+        self.trajectory_opacity = trajectory_opacity
         self.show_connections = show_connections
         self.show_segmentation = show_segmentation
         self.segmentation_opacity = segmentation_opacity
@@ -281,7 +282,7 @@ class RodentVisualizerCV:
                             scaled_color = tuple(int(c * alpha) for c in color)
                             cv2.line(canvas, self.trails[part][trail_i - 1], self.trails[part][trail_i], scaled_color,2)
 
-                    if self.show_track:
+                    if self.show_trajectory:
                         # Calculate centroid of body parts if all three are present
                         if all(part in positions for part in ['body_center', 'left_body', 'right_body']):
                             # Calculate centroid (average position)
@@ -292,11 +293,14 @@ class RodentVisualizerCV:
                             centroid_position = (centroid_x, centroid_y)
                             # Add to permanent trajectory
                             self.body_centroid_trajectory.append(centroid_position)
-
-                        # Draw the complete trajectory with a solid line
+                        # Draw the complete trajectory
                         if len(self.body_centroid_trajectory) > 1:
+                            # Create a transparent overlay for the trajectory
+                            trajectory_overlay = np.zeros_like(canvas)
+                            # Draw the trajectory on the overlay
                             trajectory_points = np.array(self.body_centroid_trajectory, dtype=np.int32)
-                            cv2.polylines(canvas, [trajectory_points], False, (0, 255, 0), 2)
+                            cv2.polylines(trajectory_overlay, [trajectory_points], False, (0, 255, 0), 2)
+                            cv2.addWeighted(trajectory_overlay, self.trajectory_opacity, canvas, 1.0, 0, canvas)
 
                     # Draw current position (larger dot)
                     cv2.circle(canvas, (px, py), 3, self.colors[part], -1)
@@ -353,7 +357,8 @@ if __name__ == "__main__":
         height=480,
         trail_length=50,  # Show last x frames of trail
         show_trails=False,
-        show_track=True,
+        show_trajectory=True,
+        trajectory_opacity=0.3,
         show_connections=True,
         show_segmentation=True,
         segmentation_opacity=0.5,  # Opacity of segmentation fill (0-1)
