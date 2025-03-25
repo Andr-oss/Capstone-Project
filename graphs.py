@@ -2,7 +2,6 @@ import os
 import pandas as pd
 import matplotlib.pyplot as plt
 
-
 def plot_separate_coordinates(csv_file):
     # Check if the CSV file exists
     if not os.path.exists(csv_file):
@@ -42,7 +41,6 @@ def plot_separate_coordinates(csv_file):
 
     # Display all the figures
     plt.show()
-
 
 if __name__ == '__main__':
     # Specify the full path to your CSV file
