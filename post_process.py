@@ -1,10 +1,9 @@
 import pandas as pd
 import numpy as np
 
-<<<<<<< Updated upstream
 # File paths
-input_file = r"Macintosh HD\Users\lionkk\Downloads\CollectedData_Chen.csv"
-output_file = r"Macintosh HD\Users\lionkk\Downloads\ProcessedData_Chen.csv"
+input_file = r"C:\Users\mbazi\Downloads\CollectedData_Chen.csv"
+output_file = r"C:\Users\mbazi\Downloads\output25.csv"
 
 # Read the CSV file with multi-level headers
 df = pd.read_csv(input_file, header=[1, 2])
@@ -135,44 +134,11 @@ df.to_csv(output_file, index=False)
 
 print(df.head())
 print(f"Processed data saved to {output_file}")
-=======
 def postprocess_csv(input_file, output_file):
     # Read the CSV file with multi-level headers
     df = pd.read_csv(input_file, header=[1, 2])
     df.columns = [f"{col1}_{col2}" if pd.notna(col2) else col1 for col1, col2 in df.columns]
     df.rename(columns={df.columns[0]: "Frame"}, inplace=True)
-
-    # Function to calculate centroid of three points
-    def find_centroid(p1, p2, p3):
-        if (pd.isna(p1[0]) or pd.isna(p1[1]) or
-            pd.isna(p2[0]) or pd.isna(p2[1]) or
-            pd.isna(p3[0]) or pd.isna(p3[1])):
-            return np.nan, np.nan
-        x = round((float(p1[0]) + float(p2[0]) + float(p3[0])) / 3, 2)
-        y = round((float(p1[1]) + float(p2[1]) + float(p3[1])) / 3, 2)
-        return x, y
-
-    # Estimation logic
-    def estimate_missing_part(part, row):
-        if part == 'Right_Ear':
-            if not (pd.isna(row["Nose_x"]) or pd.isna(row["Left_Ear_x"])):
-                return (2 * row["Nose_x"] - row["Left_Ear_x"], 2 * row["Nose_y"] - row["Left_Ear_y"])
-        elif part == 'Left_Ear':
-            if not (pd.isna(row["Nose_x"]) or pd.isna(row["Right_Ear_x"])):
-                return (2 * row["Nose_x"] - row["Right_Ear_x"], 2 * row["Nose_y"] - row["Right_Ear_y"])
-        elif part == 'Nose':
-            if not (pd.isna(row["Left_Ear_x"]) or pd.isna(row["Right_Ear_x"])):
-                return ((row["Left_Ear_x"] + row["Right_Ear_x"]) / 2, (row["Left_Ear_y"] + row["Right_Ear_y"]) / 2)
-        elif part == 'Right_Body':
-            if not (pd.isna(row["Body_Center_x"]) or pd.isna(row["Left_Body_x"])):
-                return (2 * row["Body_Center_x"] - row["Left_Body_x"], 2 * row["Body_Center_y"] - row["Left_Body_y"])
-        elif part == 'Left_Body':
-            if not (pd.isna(row["Body_Center_x"]) or pd.isna(row["Right_Body_x"])):
-                return (2 * row["Body_Center_x"] - row["Right_Body_x"], 2 * row["Body_Center_y"] - row["Right_Body_y"])
-        elif part == 'Tail_Base':
-            if not pd.isna(row["Body_Center_x"]):
-                return (row["Body_Center_x"], row["Body_Center_y"] + 10)
-        return np.nan, np.nan
 
     body_parts = ["Nose", "Left_Ear", "Right_Ear", "Body_Center", "Left_Body", "Right_Body", "Tail_Base"]
     for part in body_parts:
@@ -208,4 +174,4 @@ def postprocess_csv(input_file, output_file):
     df[numeric_columns] = df[numeric_columns].round(2)
     df.to_csv(output_file, index=False)
     print(f"✅ Post-processing done. Saved to: {output_file}")
->>>>>>> Stashed changes
+

@@ -141,8 +141,8 @@ class RodentVisualizerCV:
         canvas_width, canvas_height = canvas.shape[1], canvas.shape[0]
 
         # Stem of the T (vertical)
-        stem_width = canvas_width // 10
-        stem_height = canvas_height // 2
+        stem_width = canvas_width // 6
+        stem_height = canvas_height // 1
         stem_left = (canvas_width - stem_width) // 2
         stem_top = (canvas_height - stem_height) // 2
 
@@ -160,15 +160,15 @@ class RodentVisualizerCV:
 
         # Draw left arm
         cv2.rectangle(canvas,
-                      (left_arm_left, stem_top + stem_height // 2 - stem_width // 2),
-                      (stem_left, stem_top + stem_height // 2 + stem_width // 2),
+                      (left_arm_left, stem_top + stem_height // 4 - stem_width),
+                      (stem_left, stem_top + stem_height // 4),
                       maze_color,
                       wall_thickness)
 
         # Draw right arm
         cv2.rectangle(canvas,
-                      (stem_left + stem_width, stem_top + stem_height // 2 - stem_width // 2),
-                      (right_arm_right, stem_top + stem_height // 2 + stem_width // 2),
+                      (stem_left + stem_width, stem_top + stem_height // 4 - stem_width),
+                      (right_arm_right, stem_top + stem_height // 4),
                       maze_color,
                       wall_thickness)
 
@@ -394,7 +394,7 @@ if __name__ == "__main__":
     # Create visualizer with customizable visualization options
     visualizer = RodentVisualizerCV(
         input_file,
-        video_file,
+        #video_file,
         width=480,
         height=480,
         trail_length=50,  # Show last x frames of trail
