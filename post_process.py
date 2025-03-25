@@ -22,7 +22,6 @@ print("Columns:", df.columns.tolist())
 
 # Function to calculate centroid of three points
 def find_centroid(p1, p2, p3):
-    # Check if any coordinates are missing
     if (pd.isna(p1[0]) or pd.isna(p1[1]) or
             pd.isna(p2[0]) or pd.isna(p2[1]) or
             pd.isna(p3[0]) or pd.isna(p3[1])):
@@ -36,7 +35,7 @@ def find_centroid(p1, p2, p3):
 
 # Function to estimate missing body parts based on anatomical relationships
 def estimate_missing_part(part, row):
-    # Check which part we're estimating
+
     if part == 'Right_Ear':
         if not (pd.isna(row["Nose_x"]) or pd.isna(row["Left_Ear_x"])):
             # Mirror Left Ear across Nose
@@ -70,7 +69,7 @@ def estimate_missing_part(part, row):
     elif part == 'Tail_Base':
         if not pd.isna(row["Body_Center_x"]):
             # Estimate based on body center
-            return (row["Body_Center_x"], row["Body_Center_y"] + 10)
+            return row["Body_Center_x"], row["Body_Center_y"] + 10
 
     # Return NaN if estimation is not possible
     return np.nan, np.nan

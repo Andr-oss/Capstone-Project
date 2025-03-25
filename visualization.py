@@ -14,6 +14,8 @@ def normalize_coords(self, x, y):
 
     return norm_x, norm_y
 
+
+
 class RodentVisualizerCV:
     def __init__(self, csv_path, video_path=None, width=800, height=600, trail_length=None,
                  show_trails=False, show_trajectory=True, trajectory_opacity=0.3, show_connections=True, show_segmentation=True,
@@ -47,7 +49,6 @@ class RodentVisualizerCV:
         self.show_labels = show_labels
         self.show_legend = show_legend
         self.video_path = video_path
-        #self.has_video = False
 
         # Detect body parts and track original column names
         self.body_part_columns = {}  # Format: {processed_name: {"_x": "Original_X_col", "_y": "Original_Y_col"}}
@@ -115,7 +116,6 @@ class RodentVisualizerCV:
         if self.video_path:
             self.video_capture = cv2.VideoCapture(self.video_path)
             if self.video_capture.isOpened():
-                #self.has_video = True
                 # Get video properties
                 self.video_width = int(self.video_capture.get(cv2.CAP_PROP_FRAME_WIDTH))
                 self.video_height = int(self.video_capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -130,6 +130,48 @@ class RodentVisualizerCV:
                     self.height = self.video_height
             else:
                 print(f"Warning: Could not open video file {self.video_path}")
+
+    @staticmethod
+    def _draw_t_maze(canvas):
+        # Maze color (dark gray)
+        maze_color = (0, 0, 0)
+        wall_thickness = 5
+
+        # Calculate maze dimensions relative to canvas size
+        canvas_width, canvas_height = canvas.shape[1], canvas.shape[0]
+
+        # Stem of the T (vertical)
+        stem_width = canvas_width // 10
+        stem_height = canvas_height // 2
+        stem_left = (canvas_width - stem_width) // 2
+        stem_top = (canvas_height - stem_height) // 2
+
+        # Arms of the T (horizontal)
+        arm_length = stem_height
+        left_arm_left = stem_left - arm_length
+        right_arm_right = stem_left + stem_width + arm_length
+
+        # Draw the stem (vertical part)
+        cv2.rectangle(canvas,
+                      (stem_left, stem_top),
+                      (stem_left + stem_width, stem_top + stem_height),
+                      maze_color,
+                      wall_thickness)
+
+        # Draw left arm
+        cv2.rectangle(canvas,
+                      (left_arm_left, stem_top + stem_height // 2 - stem_width // 2),
+                      (stem_left, stem_top + stem_height // 2 + stem_width // 2),
+                      maze_color,
+                      wall_thickness)
+
+        # Draw right arm
+        cv2.rectangle(canvas,
+                      (stem_left + stem_width, stem_top + stem_height // 2 - stem_width // 2),
+                      (right_arm_right, stem_top + stem_height // 2 + stem_width // 2),
+                      maze_color,
+                      wall_thickness)
+
 
     def display_animation(self, delay=30):
 
@@ -169,12 +211,13 @@ class RodentVisualizerCV:
             else:
                 # Use blank canvas as before
                 canvas = np.ones((self.height, self.width, 3), dtype=np.uint8) * 255
-
                 # Draw coordinate grid on blank canvas only
                 for grid_i in range(0, self.width, 100):
                     cv2.line(canvas, (grid_i, 0), (grid_i, self.height), (240, 240, 240), 1)
                 for grid_i in range(0, self.height, 100):
                     cv2.line(canvas, (0, grid_i), (self.width, grid_i), (240, 240, 240), 1)
+                # Draw T-Maze at the center
+                self._draw_t_maze(canvas)
 
             # Store positions for connections
             positions = {}
