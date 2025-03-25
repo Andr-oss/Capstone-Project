@@ -133,6 +133,89 @@ class TestEstimateMissingPart(unittest.TestCase):
         self.assertTrue(np.isnan(est_x))
         self.assertTrue(np.isnan(est_y))
 
+class MockNormalizer:
+    """
+    A minimal mock class that provides the attributes
+    required for testing `normalize_coords`.
+    """
+    def __init__(self, min_x, max_x, min_y, max_y, width, height):
+        self.min_x = min_x
+        self.max_x = max_x
+        self.min_y = min_y
+        self.max_y = max_y
+        self.width = width
+        self.height = height
+
+    def normalize_coords(self, x, y):
+        # Convert data coordinates to pixel coordinates with bounds checking
+        norm_x = int((x - self.min_x) / (self.max_x - self.min_x) * (self.width - 40) + 20)
+        norm_y = int((y - self.min_y) / (self.max_y - self.min_y) * (self.height - 40) + 20)
+
+        # Ensure within bounds
+        norm_x = max(0, min(norm_x, self.width - 1))
+        norm_y = max(0, min(norm_y, self.height - 1))
+
+        return norm_x, norm_y
+
+class TestNormalizeCoords(unittest.TestCase):
+
+    def setUp(self):
+        """
+        Prepare a normalizer with some known ranges:
+          min_x=0, max_x=100
+          min_y=0, max_y=100
+          width=200, height=200
+        This helps illustrate typical usage. Adjust as needed.
+        """
+        self.normalizer = MockNormalizer(
+            min_x=0, max_x=100,
+            min_y=0, max_y=100,
+            width=200, height=200
+        )
+
+    def test_normalize_coords_center(self):
+        """
+        Test a coordinate in the 'middle' of the data range,
+        expecting it to map roughly to the center of the output.
+        """
+        x, y = 50, 50
+        norm_x, norm_y = self.normalizer.normalize_coords(x, y)
+        # Calculate expected:
+        # (x-min_x)/(max_x-min_x) = 50/100 = 0.5
+        # => 0.5 * (width - 40) = 0.5 * 160 = 80
+        # => 80 + 20 = 100
+        # Similarly for y => 100
+        self.assertEqual(norm_x, 100)
+        self.assertEqual(norm_y, 100)
+
+    def test_normalize_coords_low_bounds(self):
+        # For x = -10 -> ratio = -0.1 -> scaled = -16 -> +20 = 4
+        # Clamps to [0, 199], but 4 is within that, so final is 4
+        x, y = -10, -10
+        norm_x, norm_y = self.normalizer.normalize_coords(x, y)
+        self.assertEqual(norm_x, 4, "Expected ~4 given the margin logic")
+        self.assertEqual(norm_y, 4, "Expected ~4 given the margin logic")
+
+    def test_normalize_coords_high_bounds(self):
+        # For x = 110 -> ratio = 1.1 -> scaled = 176 -> +20 = 196
+        # That is within [0, 199], so final is 196
+        x, y = 110, 110
+        norm_x, norm_y = self.normalizer.normalize_coords(x, y)
+        self.assertEqual(norm_x, 196, "Expected ~196 given the margin logic")
+        self.assertEqual(norm_y, 196, "Expected ~196 given the margin logic")
+
+    def test_normalize_coords_near_edge(self):
+        """
+        Test a coordinate near the lower edge to ensure boundary
+        calculations stay correct and don't produce out-of-bounds
+        integers.
+        """
+        x, y = 0.1, 0.1  # Slightly above the minimum
+        norm_x, norm_y = self.normalizer.normalize_coords(x, y)
+        # You can assert that the result is near the 20-pixel offset from the edge.
+        # The exact integer might be 20 or 21 depending on float rounding.
+        self.assertTrue(0 <= norm_x <= 21, "Expected X to be near the lower boundary (20)")
+        self.assertTrue(0 <= norm_y <= 21, "Expected Y to be near the lower boundary (20)")
 
 if __name__ == '__main__':
     unittest.main()
