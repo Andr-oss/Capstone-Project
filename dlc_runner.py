@@ -1,32 +1,35 @@
-from concurrent.futures import process
-
 import deeplabcut
 from pathlib import Path
 import os
+import glob
+import pandas as pd
+from post_process import postprocess_csv
+import sys
 
-# === CONFIGURATION ===
+# === PARSE VIDEO PATH FROM ARGUMENT ===
+if len(sys.argv) < 2:
+    print(" Please provide a video path as the first argument.")
+    exit(1)
+
+VIDEO_PATH = sys.argv[1]
 CONFIG_PATH = r"D:/Capstone-Project/AndrewFirstTraining-Andrew-2025-03-08/config.yaml"
-VIDEO_PATH = r"D:/Capstone-Project/AndrewFirstTraining-Andrew-2025-03-08/f042814_Video.avi"
 OUTPUT_FOLDER = Path(VIDEO_PATH).parent
 SAVE_AS_CSV = True
 
 # === STEP 1: Run inference with DLC ===
-print(" Analyzing video with DeepLabCut...")
+print("Analyzing video with DeepLabCut...")
 deeplabcut.analyze_videos(
     config=CONFIG_PATH,
     videos=[VIDEO_PATH],
     save_as_csv=SAVE_AS_CSV,
     destfolder=str(OUTPUT_FOLDER),
-    auto_track=False  # Set to True if you have refinements or multiple animals
+    auto_track=False
 )
 
 print(" Keypoints extracted.")
 
 # === STEP 2: Find the most recent output CSV ===
-import glob
-import pandas as pd
-
-print(" Searching for the latest output CSV file...")
+print("Searching for the latest output CSV file...")
 csv_files = sorted(glob.glob(str(OUTPUT_FOLDER / "*DLC*.csv")), key=os.path.getmtime, reverse=True)
 if not csv_files:
     raise FileNotFoundError(" No DLC output CSV files found!")
@@ -34,10 +37,7 @@ if not csv_files:
 latest_csv = csv_files[0]
 print(f" Found DLC keypoints file: {latest_csv}")
 
-# === STEP 3: Optionally post-process it (your existing post-process pipeline) ===
-from post_process import postprocess_csv  # We can create this wrapper from your logic
-
+# === STEP 3: Post-process the CSV ===
 output_post_file = str(OUTPUT_FOLDER / "output_postprocessed.csv")
 postprocess_csv(latest_csv, output_post_file)
-
-print(f" Done! Final processed file saved at: {output_post_file}")
+print(f" Final processed file saved at: {output_post_file}")
