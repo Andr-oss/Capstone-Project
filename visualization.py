@@ -387,15 +387,14 @@ class RodentVisualizerCV:
 # Example usage
 if __name__ == "__main__":
     # Replace with your actual CSV file path
-    #input_file = r"C:\Users\mbazi\Downloads\output22.csv"  # Update with your path
-    input_file = r"C:\Users\Bazil\Downloads\f042814_Video_tracking.csv"
-    video_file = r"C:\Users\Bazil\Downloads\f042814_Video.mp4"  # Optional video
+    input_file = r"D:\Capstone-Project\AndrewFirstTraining-Andrew-2025-03-08\output_postprocessed.csv"  # Update with your path
+    video_file = r"D:\Capstone-Project\AndrewFirstTraining-Andrew-2025-03-08\f042814_Video.mp4"  # Optional video
     #video_file = r"C:\Users\mbazi\Downloads\P20221101_Video.mp4"  # Optional video
 
     # Create visualizer with customizable visualization options
     visualizer = RodentVisualizerCV(
         input_file,
-        video_file,
+        #video_file,
         width=480,
         height=480,
         trail_length=50,  # Show last x frames of trail
