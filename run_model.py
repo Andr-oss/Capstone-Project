@@ -52,7 +52,7 @@ def process_video_with_model(video_path, model_path, output_dir=None,
                 self.conv1 = torch.nn.Conv2d(3, 16, kernel_size=3, padding=1)
                 self.conv2 = torch.nn.Conv2d(16, 32, kernel_size=3, padding=1)
                 self.pool = torch.nn.MaxPool2d(2, 2)
-                self.fc = torch.nn.Linear(32, 9)  # 3 keypoints × 3 values (x, y, conf)
+                self.fc = torch.nn.Linear(32, 21)  # 3 keypoints × 3 values (x, y, conf)
 
             def forward(self, x):
                 # Process at original resolution
@@ -63,7 +63,7 @@ def process_video_with_model(video_path, model_path, output_dir=None,
                 x = x.view(x.size(0), -1)
                 x = self.fc(x)
                 # Reshape to [batch, num_keypoints, 3]
-                return x.view(-1, 3, 3)  # 3 keypoints, each with x, y, conf
+                return x.view(-1, 7, 3)  # 3 keypoints, each with x, y, conf
 
         model = SimpleKeypointModel()
         # Note: we're not actually loading the state dict since the architectures won't match
@@ -184,7 +184,7 @@ def process_video_with_model(video_path, model_path, output_dir=None,
 
 if __name__ == "__main__":
     # Example usage
-    VIDEO_PATH = r"C:\Users\Bazil\Downloads\f042814_Video.mp4"
+    VIDEO_PATH = r"C:\Users\mbazi\Downloads\P20221101_Video.mp4"
     MODEL_PATH = r"snapshot-best-300.pt"
 
     process_video_with_model(VIDEO_PATH, MODEL_PATH)
