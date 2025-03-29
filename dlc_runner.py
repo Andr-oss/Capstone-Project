@@ -4,14 +4,9 @@ import os
 import glob
 import pandas as pd
 from post_process import postprocess_csv
-import sys
 
-# === PARSE VIDEO PATH FROM ARGUMENT ===
-if len(sys.argv) < 2:
-    print(" Please provide a video path as the first argument.")
-    exit(1)
-
-VIDEO_PATH = sys.argv[1]
+# === HARDCODED VIDEO PATH ===
+VIDEO_PATH = r"D:/Capstone-Project/AndrewFirstTraining-Andrew-2025-03-08/f042814_Video.avi"
 CONFIG_PATH = r"D:/Capstone-Project/AndrewFirstTraining-Andrew-2025-03-08/config.yaml"
 OUTPUT_FOLDER = Path(VIDEO_PATH).parent
 SAVE_AS_CSV = True
@@ -26,18 +21,18 @@ deeplabcut.analyze_videos(
     auto_track=False
 )
 
-print(" Keypoints extracted.")
+print("✅ Keypoints extracted.")
 
 # === STEP 2: Find the most recent output CSV ===
 print("Searching for the latest output CSV file...")
 csv_files = sorted(glob.glob(str(OUTPUT_FOLDER / "*DLC*.csv")), key=os.path.getmtime, reverse=True)
 if not csv_files:
-    raise FileNotFoundError(" No DLC output CSV files found!")
+    raise FileNotFoundError("❌ No DLC output CSV files found!")
 
 latest_csv = csv_files[0]
-print(f" Found DLC keypoints file: {latest_csv}")
+print(f"✅ Found DLC keypoints file: {latest_csv}")
 
 # === STEP 3: Post-process the CSV ===
 output_post_file = str(OUTPUT_FOLDER / "output_postprocessed.csv")
 postprocess_csv(latest_csv, output_post_file)
-print(f" Final processed file saved at: {output_post_file}")
+print(f"✅ Final processed file saved at: {output_post_file}")
