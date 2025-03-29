@@ -11,8 +11,9 @@ if len(sys.argv) < 2:
     print(" Please provide a video path as the first argument.")
     exit(1)
 
-VIDEO_PATH = sys.argv[1]
-CONFIG_PATH = r"C:\Users\mbazi\Downloads\AndrewFirstTraining-Andrew-2025-03-08\config.yaml"
+#VIDEO_PATH = sys.argv[1]
+VIDEO_PATH = r"C:\Users\Bazil\Downloads\P20221101_Video.mp4"
+CONFIG_PATH = r"C:\Users\Bazil\Downloads\AndrewFirstTraining-Andrew-2025-03-08 (1)\config.yaml"
 OUTPUT_FOLDER = Path(VIDEO_PATH).parent
 SAVE_AS_CSV = True
 
