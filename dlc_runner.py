@@ -12,7 +12,7 @@ if len(sys.argv) < 2:
     exit(1)
 
 #VIDEO_PATH = sys.argv[1]
-VIDEO_PATH = r"C:\Users\Bazil\Downloads\P20221101_Video.mp4"
+VIDEO_PATH = r"C:\Users\Bazil\Downloads\f042814_Video.mp4"
 CONFIG_PATH = r"C:\Users\Bazil\Downloads\AndrewFirstTraining-Andrew-2025-03-08 (1)\config.yaml"
 OUTPUT_FOLDER = Path(VIDEO_PATH).parent
 SAVE_AS_CSV = True

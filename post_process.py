@@ -2,17 +2,17 @@ import pandas as pd
 import numpy as np
 
 # File paths
-input_file = r"C:\Users\mbazi\Downloads\CollectedData_Chen.csv"
-output_file = r"C:\Users\mbazi\Downloads\output25.csv"
+input_file = r"C:\Users\Bazil\Downloads\f042814_Video_tracking.csv"
+output_file = r"C:\Users\Bazil\Downloads\output23.csv"
 
 # Read the CSV file with multi-level headers
-df = pd.read_csv(input_file, header=[1, 2])
+df = pd.read_csv(input_file, header=[0])
 
 # Make a copy of the original multi-index columns for reference
 original_columns = df.columns.tolist()
 
 # Flatten the multi-level column headers
-df.columns = [f"{col1}_{col2}" if pd.notna(col2) else col1 for col1, col2 in df.columns]
+#df.columns = [f"{col1}_{col2}" if pd.notna(col2) else col1 for col1, col2 in df.columns]
 
 # Rename first column to "Frame"
 df.rename(columns={df.columns[0]: "Frame"}, inplace=True)

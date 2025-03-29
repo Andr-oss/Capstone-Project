@@ -7,11 +7,24 @@ from torch import nn
 from torchvision.models import resnet50
 
 
-class DeepLabCutResNet(nn.Module):
+class DeepLabCutWrapper(nn.Module):
     def __init__(self, num_keypoints):
         super().__init__()
-        self.base = nn.Sequential(*list(resnet50(pretrained=False).children())[:-2])
-        self.deconv_layers = nn.Sequential(
+        # Create backbone with proper layer structure
+        self.backbone = resnet50(pretrained=False)
+        self.backbone = nn.Sequential(
+            self.backbone.conv1,
+            self.backbone.bn1,
+            self.backbone.relu,
+            self.backbone.maxpool,
+            self.backbone.layer1,
+            self.backbone.layer2,
+            self.backbone.layer3,
+            self.backbone.layer4
+        )
+
+        # Add DLC-style deconvolution heads
+        self.heatmap_head = nn.Sequential(
             nn.ConvTranspose2d(2048, 256, kernel_size=4, stride=2, padding=1),
             nn.ReLU(inplace=True),
             nn.ConvTranspose2d(256, 256, kernel_size=4, stride=2, padding=1),
@@ -20,9 +33,9 @@ class DeepLabCutResNet(nn.Module):
         )
 
     def forward(self, x):
-        x = self.base(x)
-        x = self.deconv_layers(x)
-        return x
+        features = self.backbone(x)
+        heatmaps = self.heatmap_head(features)
+        return heatmaps
 
 
 def process_video_with_model(video_path, model_path, output_dir=None,
@@ -36,21 +49,29 @@ def process_video_with_model(video_path, model_path, output_dir=None,
     output_csv = os.path.join(output_dir, f"{video_name}_tracking.csv")
 
     # Initialize model
-    num_keypoints = 7  # Based on your body parts
-    model = DeepLabCutResNet(num_keypoints)
+    num_keypoints = 7
+    model = DeepLabCutWrapper(num_keypoints)
 
-    # Load trained weights
+    # Load checkpoint with proper key mapping
     checkpoint = torch.load(model_path, map_location=device)
-    if 'model' in checkpoint:  # Handle DLC checkpoint format
-        model.load_state_dict(checkpoint['model'])
-    else:
-        model.load_state_dict(checkpoint)
+
+    # Adapt checkpoint keys to match our model structure
+    state_dict = {}
+    for k, v in checkpoint['model'].items():
+        if k.startswith('backbone.model.'):
+            new_key = k.replace('backbone.model.', 'backbone.')
+            state_dict[new_key] = v
+        elif k.startswith('heads.bodypart.heatmap_head.'):
+            new_key = k.replace('heads.bodypart.heatmap_head.', 'heatmap_head.')
+            state_dict[new_key] = v
+
+    model.load_state_dict(state_dict, strict=False)
     model = model.to(device)
     model.eval()
 
-    # Video parameters (adjust crop as needed)
-    crop_params = (0, 240, 0, 240)  # y1, y2, x1, x2 from your config
-    input_size = 224  # Standard for ResNet
+    # Video parameters from config
+    crop_params = (0, 240, 0, 240)  # y1, y2, x1, x2
+    input_size = 224
 
     # Open video
     cap = cv2.VideoCapture(video_path)
@@ -114,8 +135,8 @@ def process_video_with_model(video_path, model_path, output_dir=None,
 
 
 if __name__ == "__main__":
-    # Simply change these paths to match your files
-    VIDEO_PATH = r"C:\Users\mbazi\Downloads\P20221101_Video.mp4"
+    # Change these paths as needed
+    VIDEO_PATH = r"C:\Users\Bazil\Downloads\f042814_Video.mp4"
     MODEL_PATH = r"snapshot-best-300.pt"
 
     process_video_with_model(VIDEO_PATH, MODEL_PATH)

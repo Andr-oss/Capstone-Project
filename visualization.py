@@ -388,8 +388,8 @@ class RodentVisualizerCV:
 if __name__ == "__main__":
     # Replace with your actual CSV file path
     #input_file = r"C:\Users\mbazi\Downloads\output22.csv"  # Update with your path
-    input_file = r"C:\Users\mbazi\Downloads\f042814_Video_tracking.csv"
-    video_file = r"C:\Users\mbazi\Downloads\f042814_Video.mp4"  # Optional video
+    input_file = r"C:\Users\Bazil\Downloads\f042814_Video_tracking.csv"
+    video_file = r"C:\Users\Bazil\Downloads\f042814_Video.mp4"  # Optional video
     #video_file = r"C:\Users\mbazi\Downloads\P20221101_Video.mp4"  # Optional video
 
     # Create visualizer with customizable visualization options
