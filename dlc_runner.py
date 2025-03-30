@@ -6,8 +6,8 @@ import pandas as pd
 from post_process import postprocess_csv
 
 # === HARDCODED VIDEO PATH ===
-VIDEO_PATH = r"D:/Capstone-Project/AndrewFirstTraining-Andrew-2025-03-08/f042814_Video.avi"
-CONFIG_PATH = r"D:/Capstone-Project/AndrewFirstTraining-Andrew-2025-03-08/config.yaml"
+VIDEO_PATH = r"C:\Users\Bazil\Downloads\f042814_Video.mp4"
+CONFIG_PATH = r"C:\Users\Bazil\Downloads\AndrewFirstTraining-Andrew-2025-03-08\config.yaml"
 OUTPUT_FOLDER = Path(VIDEO_PATH).parent
 SAVE_AS_CSV = True
 
@@ -18,7 +18,7 @@ deeplabcut.analyze_videos(
     videos=[VIDEO_PATH],
     save_as_csv=SAVE_AS_CSV,
     destfolder=str(OUTPUT_FOLDER),
-    auto_track=False
+    auto_track=False,
 )
 
 print("✅ Keypoints extracted.")
