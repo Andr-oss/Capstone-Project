@@ -59,3 +59,15 @@ def process_video(request):
         return JsonResponse({'status': 'Processing completed successfully', 'csv_file': output_csv})
     else:
         return JsonResponse({'error': 'Invalid request method'}, status=400)
+
+@csrf_exempt
+def stop_video(request):
+    """
+    Handles the stop process request.
+    In a production system, you would implement logic to terminate the background processing task.
+    For now, this returns a demo response.
+    """
+    if request.method == 'POST':
+        return JsonResponse({'status': 'Process stopped'})
+    else:
+        return JsonResponse({'error': 'Invalid request method'}, status=400)
