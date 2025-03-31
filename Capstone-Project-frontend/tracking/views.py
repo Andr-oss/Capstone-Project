@@ -2,7 +2,7 @@ from django.shortcuts import render
 import csv
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-import sys, pathlib, os
+import sys, pathlib, os, multiprocessing
 
 # Set BASE_DIR and update sys.path to import backend modules outside the frontend folder
 BASE_DIR = pathlib.Path(__file__).resolve().parent.parent
@@ -10,6 +10,9 @@ sys.path.append(str(BASE_DIR.parent))
 
 # Import your backend function from dlc_runner
 import dlc_runner
+
+# Global variable to hold the background processing process
+PROCESS = None
 
 def dashboard_view(request):
     return render(request, 'tracking/dashboard.html')
@@ -40,9 +43,10 @@ def livestream_view(request):
 @csrf_exempt
 def process_video(request):
     """
-    Handles the uploaded video, calls the run_dlc_pipeline function (which includes post-processing),
-    and returns a JSON response with the path of the final processed CSV.
+    Handles the uploaded video, starts the run_dlc_pipeline function in a background process,
+    and returns a JSON response indicating that processing has started.
     """
+    global PROCESS
     if request.method == 'POST':
         uploaded_file = request.FILES.get('videos')
         if not uploaded_file:
@@ -53,10 +57,15 @@ def process_video(request):
             for chunk in uploaded_file.chunks():
                 f.write(chunk)
         try:
-            output_csv = dlc_runner.run_dlc_pipeline(temp_video_path)
+            # Start the processing in a separate process
+            PROCESS = multiprocessing.Process(
+                target=dlc_runner.run_dlc_pipeline,
+                args=(temp_video_path,)
+            )
+            PROCESS.start()
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
-        return JsonResponse({'status': 'Processing completed successfully', 'csv_file': output_csv})
+        return JsonResponse({'status': 'Processing started'})
     else:
         return JsonResponse({'error': 'Invalid request method'}, status=400)
 
@@ -64,10 +73,16 @@ def process_video(request):
 def stop_video(request):
     """
     Handles the stop process request.
-    In a production system, you would implement logic to terminate the background processing task.
-    For now, this returns a demo response.
+    Terminates the background process running run_dlc_pipeline.
     """
+    global PROCESS
     if request.method == 'POST':
-        return JsonResponse({'status': 'Process stopped'})
+        if PROCESS is not None and PROCESS.is_alive():
+            PROCESS.terminate()
+            PROCESS.join()
+            PROCESS = None
+            return JsonResponse({'status': 'Process stopped'})
+        else:
+            return JsonResponse({'status': 'No active process'})
     else:
         return JsonResponse({'error': 'Invalid request method'}, status=400)
