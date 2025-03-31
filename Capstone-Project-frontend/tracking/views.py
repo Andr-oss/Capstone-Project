@@ -4,27 +4,6 @@ from django.contrib.auth import login, authenticate
 import csv
 from django.http import HttpResponse
 
-def login_view(request):
-    if request.method == 'POST':
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-        error = None
-
-        # Authenticate using Django's built-in authentication
-        from django.contrib.auth import authenticate
-        user = authenticate(request, username=username, password=password)
-        if user is None:
-            error = "Invalid username or password"
-            return render(request, 'tracking/login.html', {'error': error, 'username': username})
-
-        # Log the user in
-        from django.contrib.auth import login
-        login(request, user)
-        return redirect('dashboard')
-
-    return render(request, 'tracking/login.html')
-
-
 def dashboard_view(request):
     if not request.user.is_authenticated:
         return redirect('login')
