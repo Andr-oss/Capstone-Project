@@ -40,24 +40,45 @@
         function processVideos() {
             var fileInput = document.getElementById("videoUpload");
             if (fileInput.files.length === 0) {
-                alert("Please select a video file to play.");
+                alert("Please select a video file to process.");
                 return;
             }
             // For demonstration, we take the first selected video file.
             var videoFile = fileInput.files[0];
 
-            // Check if the file type is a video
+            // Check if the file type is a video.
             if (!videoFile.type.startsWith("video/")) {
                 alert("Selected file is not a video.");
                 return;
             }
 
             var videoPlayer = document.getElementById("videoPlayer");
-            // Create an object URL for the video file
+            // Create an object URL for the video file.
             var fileURL = URL.createObjectURL(videoFile);
             videoPlayer.src = fileURL;
             videoPlayer.style.display = "block";  // Make the video player visible
             videoPlayer.play();
+
+            // Create a FormData object from the upload form.
+            var formData = new FormData(document.getElementById("uploadForm"));
+
+            // Send AJAX POST request to the process_video endpoint.
+            fetch("{% url 'process_video' %}", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert("Error: " + data.error);
+                } else {
+                    alert("Processing completed successfully. CSV file: " + data.csv_file);
+                }
+            })
+            .catch(error => {
+                console.error("Error during processing:", error);
+                alert("An error occurred during processing.");
+            });
         }
 
         // Function to pause/stop the video playback.
@@ -66,6 +87,23 @@
             if (!videoPlayer.paused) {
                 videoPlayer.pause();
             }
+
+            // Optionally, send a request to stop backend processing.
+            fetch("{% url 'stop_video' %}", {
+                method: "POST",
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert("Error: " + data.error);
+                } else {
+                    alert("Process stopped: " + data.status);
+                }
+            })
+            .catch(error => {
+                console.error("Error during stop process:", error);
+                alert("An error occurred while stopping the process.");
+            });
         }
 
         // Updated download function to download CSV data.
