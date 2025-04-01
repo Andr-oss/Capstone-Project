@@ -6,23 +6,6 @@
     <meta charset="UTF-8">
     <title>New Videos - Rodent Video Tracking</title>
     <link rel="stylesheet" href="{% static 'tracking/css/style.css' %}">
-    <style>
-        #progressContainer {
-            width: 50%;
-            background-color: #f3f3f3;
-            border-radius: 5px;
-            margin-top: 20px;
-            display: none; /* Hidden until processing starts */
-        }
-        #progressBar {
-            width: 0%;
-            height: 20px;
-            background-color: #4caf50;
-            text-align: center;
-            color: #fff;
-            border-radius: 5px;
-        }
-    </style>
 </head>
 <body>
     <div class="container">
@@ -31,7 +14,9 @@
             <!-- Form for video upload -->
             <form id="uploadForm" method="post" enctype="multipart/form-data">
                 {% csrf_token %}
+                <!-- File input to select multiple videos (visible for demo purposes) -->
                 <input type="file" id="videoUpload" name="videos" multiple accept="video/*">
+                <!-- New: Option select for processing model -->
                 <br>
                 <label for="modelOption">Select Processing Model:</label>
                 <select name="model_option" id="modelOption">
@@ -39,145 +24,92 @@
                     <option value="roboflow">Roboflow</option>
                 </select>
             </form>
-            <!-- Control buttons -->
+            <!-- Other buttons -->
             <button type="button" onclick="processVideos()">Process</button>
             <button type="button" onclick="stopProcess()">Stop process</button>
+            <button type="button" onclick="downloadVideos()">Download</button>
         </div>
-
         <!-- Video player element; hidden by default -->
         <video id="videoPlayer" controls style="display: none; width: 100%; max-width: 600px; margin-top: 20px;">
             Your browser does not support the video tag.
         </video>
-
-        <!-- Progress bar elements -->
-        <div id="progressContainer">
-            <div id="progressBar">0%</div>
-        </div>
     </div>
 
     <script>
-        let progressInterval = null;
-
+        // Function to play the uploaded video using the HTML5 video element.
         function processVideos() {
-            const fileInput = document.getElementById("videoUpload");
+            var fileInput = document.getElementById("videoUpload");
             if (fileInput.files.length === 0) {
                 alert("Please select a video file to process.");
                 return;
             }
-            const videoFile = fileInput.files[0];
+            // For demonstration, we take the first selected video file.
+            var videoFile = fileInput.files[0];
+
+            // Check if the file type is a video.
             if (!videoFile.type.startsWith("video/")) {
                 alert("Selected file is not a video.");
                 return;
             }
 
-            // Preview the video locally.
-            const videoPlayer = document.getElementById("videoPlayer");
-            videoPlayer.src = URL.createObjectURL(videoFile);
-            videoPlayer.style.display = "block";
+            var videoPlayer = document.getElementById("videoPlayer");
+            // Create an object URL for the video file.
+            var fileURL = URL.createObjectURL(videoFile);
+            videoPlayer.src = fileURL;
+            videoPlayer.style.display = "block";  // Make the video player visible
             videoPlayer.play();
 
-            // Show progress bar & reset to 0
-            document.getElementById("progressContainer").style.display = "block";
-            updateProgressBar(0);
+            // Create a FormData object from the upload form.
+            var formData = new FormData(document.getElementById("uploadForm"));
 
-            // Send form data to backend
-            const formData = new FormData(document.getElementById("uploadForm"));
+            // Send AJAX POST request to the process_video endpoint.
             fetch("{% url 'process_video' %}", {
                 method: "POST",
                 body: formData
             })
-            .then(res => res.json())
+            .then(response => response.json())
             .then(data => {
                 if (data.error) {
                     alert("Error: " + data.error);
                 } else {
-                    alert(data.status); // "Processing started"
-                    startPolling();
+                    alert("Processing completed successfully. CSV file: " + data.csv_file);
                 }
             })
-            .catch(err => {
-                console.error("Error:", err);
-                updateProgressBar(0, true);
+            .catch(error => {
+                console.error("Error during processing:", error);
+                alert("An error occurred during processing.");
             });
         }
 
+        // Function to pause/stop the video playback.
         function stopProcess() {
-            const videoPlayer = document.getElementById("videoPlayer");
+            var videoPlayer = document.getElementById("videoPlayer");
             if (!videoPlayer.paused) {
                 videoPlayer.pause();
             }
-            fetch("{% url 'stop_video' %}", { method: "POST" })
-            .then(res => res.json())
-            .then(data => {
-                alert(data.status);
-                stopPolling();
-                updateProgressBar(0, true);
+
+            // Optionally, send a request to stop backend processing.
+            fetch("{% url 'stop_video' %}", {
+                method: "POST",
             })
-            .catch(err => {
-                console.error("Error stopping process:", err);
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert("Error: " + data.error);
+                } else {
+                    alert("Process stopped: " + data.status);
+                }
+            })
+            .catch(error => {
+                console.error("Error during stop process:", error);
                 alert("An error occurred while stopping the process.");
             });
         }
 
-        function startPolling() {
-            progressInterval = setInterval(() => {
-                fetch("{% url 'get_progress' %}")
-                .then(res => res.json())
-                .then(data => {
-                    if (typeof data.progress !== "undefined") {
-                        updateProgressBar(data.progress);
-                        // Once we reach 100%, automatically download from data.csv_url
-                        if (data.progress >= 100) {
-                            stopPolling();
-                            if (data.csv_url) {
-                                downloadCSV(data.csv_url);
-                            }
-                        }
-                    }
-                })
-                .catch(err => console.error("Error polling progress:", err));
-            }, 1000);
-        }
-
-        function stopPolling() {
-            if (progressInterval) {
-                clearInterval(progressInterval);
-                progressInterval = null;
-            }
-        }
-
-        function updateProgressBar(value, hide=false) {
-            const bar = document.getElementById("progressBar");
-            bar.style.width = value + "%";
-            bar.textContent = value + "%";
-            if (hide) {
-                document.getElementById("progressContainer").style.display = "none";
-            }
-        }
-
-        // Download the CSV from the server route (data.csv_url)
-        function downloadCSV(downloadUrl) {
-            fetch(downloadUrl)
-            .then(res => {
-                if (!res.ok) {
-                    throw new Error("Network response was not ok");
-                }
-                return res.blob();
-            })
-            .then(blob => {
-                const fileURL = window.URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.style.display = "none";
-                a.href = fileURL;
-                a.download = "output_postprocessed.csv"; // or any default filename
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(fileURL);
-            })
-            .catch(err => {
-                console.error("Error fetching CSV file:", err);
-                alert("An error occurred while fetching the CSV file.");
-            });
+        // Updated download function to download CSV data.
+        function downloadVideos() {
+            // Redirect the browser to the CSV download URL.
+            window.location.href = "{% url 'download_csv' %}";
         }
     </script>
 </body>

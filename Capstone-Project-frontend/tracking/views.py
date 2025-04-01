@@ -1,20 +1,17 @@
-# tracking/views.py
 from django.shortcuts import render
-from django.http import JsonResponse
+import csv
+from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import sys, pathlib, os, multiprocessing
-from django.http import FileResponse, Http404
-from django.urls import reverse
 
+# Set BASE_DIR and update sys.path to import backend modules outside the frontend folder
 BASE_DIR = pathlib.Path(__file__).resolve().parent.parent
 sys.path.append(str(BASE_DIR.parent))
 
-# Import your backend function from dlc_runner (ensure dlc_runner does NOT import views.py)
+# Import your backend function from dlc_runner
 import dlc_runner
 
-# Import shared state from progress_manager instead of defining here
-from tracking.progress_manager import progress_value, final_csv
-
+# Global variable to hold the background processing process
 PROCESS = None
 
 def dashboard_view(request):
@@ -23,42 +20,44 @@ def dashboard_view(request):
 def new_videos_view(request):
     return render(request, 'tracking/new_videos.html')
 
+def download_csv(request):
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="tracking_data.csv"'
+    writer = csv.writer(response)
+    writer.writerow([
+        "Frame",
+        "Middle_rat_X",
+        "middle_rat_Y",
+        "middle_rat_height",
+        "middle_rat_width",
+        "Head_rat_X",
+        "Head_rat_Y",
+        "Head_rat_height",
+        "Head_rat_width"
+    ])
+    return response
+
 def livestream_view(request):
     return render(request, 'tracking/livestream.html')
 
-def download_final_csv(request):
-    """
-    Serves the final CSV file as a downloadable response.
-    """
-    from tracking.progress_manager import final_csv  # or wherever you keep progress state
-
-    # If there's no CSV path stored, raise a 404
-    if not final_csv:
-        raise Http404("No final CSV available.")
-
-    try:
-        return FileResponse(open(final_csv, 'rb'), as_attachment=True, filename='output_postprocessed.csv')
-    except FileNotFoundError:
-        raise Http404("CSV file not found on the server.")
-
 @csrf_exempt
 def process_video(request):
-    global PROCESS, progress_value, final_csv
+    """
+    Handles the uploaded video, starts the run_dlc_pipeline function in a background process,
+    and returns a JSON response indicating that processing has started.
+    """
+    global PROCESS
     if request.method == 'POST':
         uploaded_file = request.FILES.get('videos')
         if not uploaded_file:
             return JsonResponse({'error': 'No video file found'}, status=400)
-
-        # Reset progress/csv at the start
-        progress_value = 0
-        final_csv = None
-
+        # Save the uploaded file temporarily
         temp_video_path = os.path.join(BASE_DIR, 'temp_upload_' + uploaded_file.name)
         with open(temp_video_path, 'wb') as f:
             for chunk in uploaded_file.chunks():
                 f.write(chunk)
-
         try:
+            # Start the processing in a separate process
             PROCESS = multiprocessing.Process(
                 target=dlc_runner.run_dlc_pipeline,
                 args=(temp_video_path,)
@@ -66,35 +65,24 @@ def process_video(request):
             PROCESS.start()
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
-
         return JsonResponse({'status': 'Processing started'})
     else:
         return JsonResponse({'error': 'Invalid request method'}, status=400)
 
 @csrf_exempt
 def stop_video(request):
-    global PROCESS, progress_value, final_csv
+    """
+    Handles the stop process request.
+    Terminates the background process running run_dlc_pipeline.
+    """
+    global PROCESS
     if request.method == 'POST':
         if PROCESS is not None and PROCESS.is_alive():
             PROCESS.terminate()
             PROCESS.join()
             PROCESS = None
-            progress_value = 0
-            final_csv = None
             return JsonResponse({'status': 'Process stopped'})
         else:
             return JsonResponse({'status': 'No active process'})
     else:
         return JsonResponse({'error': 'Invalid request method'}, status=400)
-
-def get_progress(request):
-    global progress_value, final_csv
-    download_url = None
-    # Only provide the download URL if the pipeline is finished and we have a final CSV path
-    if progress_value >= 100 and final_csv:
-        download_url = reverse('download_final_csv')  # e.g. "/download-final-csv/"
-
-    return JsonResponse({
-        'progress': progress_value,
-        'csv_url': download_url,  # Return the URL for the frontend
-    })

@@ -7,8 +7,6 @@ urlpatterns = [
     path('new-videos/', views.new_videos_view, name='new_videos'),
     path('process-video/', views.process_video, name='process_video'),
     path('stop-video/', views.stop_video, name='stop_video'),
-    path('get-progress/', views.get_progress, name='get_progress'),  # Add this line
     path('download-csv/', views.download_csv, name='download_csv'),
     path('livestream/', views.livestream_view, name='livestream'),
-    path('download-final-csv/', views.download_final_csv, name='download_final_csv'),
 ]
