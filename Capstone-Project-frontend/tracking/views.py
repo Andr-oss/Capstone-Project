@@ -9,7 +9,7 @@ BASE_DIR = pathlib.Path(__file__).resolve().parent.parent
 sys.path.append(str(BASE_DIR.parent))
 
 # Import your backend function from dlc_runner
-import dlc_runner
+
 
 # Global variable to hold the background processing process
 PROCESS = None
