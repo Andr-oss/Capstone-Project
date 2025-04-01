@@ -1,3 +1,4 @@
+# tracking/dlc_runner.py
 import deeplabcut
 from pathlib import Path
 import os
@@ -5,15 +6,13 @@ import glob
 import pandas as pd
 from post_process import postprocess_csv
 
-# Import both progress_value and final_csv from tracking.views
-from tracking.views import progress_value, final_csv
+# Import the shared progress variables from progress_manager
+from tracking.progress_manager import progress_value, final_csv
 
-def run_dlc_pipeline(video_path: str,
-                     config_path: str = r"D:/Capstone-Project/AndrewFirstTraining-Andrew-2025-03-08/config.yaml"):
-    """
-    Runs DeepLabCut analysis and post-processing for a given video.
-    Updates progress_value at major steps and sets final_csv upon completion.
-    """
+def run_dlc_pipeline(
+    video_path: str,
+    config_path: str = r"D:/Capstone-Project/AndrewFirstTraining-Andrew-2025-03-08/config.yaml"
+):
     global progress_value, final_csv
 
     # 1. Start
@@ -54,5 +53,5 @@ def run_dlc_pipeline(video_path: str,
 
     # 5. Done
     progress_value = 100
-    final_csv = output_post_file  # Make the final CSV path available to get_progress
+    final_csv = output_post_file  # Provide final CSV to get_progress
     return output_post_file
