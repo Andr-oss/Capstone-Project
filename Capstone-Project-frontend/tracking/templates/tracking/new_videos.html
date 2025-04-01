@@ -7,7 +7,6 @@
     <title>New Videos - Rodent Video Tracking</title>
     <link rel="stylesheet" href="{% static 'tracking/css/style.css' %}">
     <style>
-        /* Optional styling for progress bar */
         #progressContainer {
             width: 50%;
             background-color: #f3f3f3;
@@ -60,7 +59,6 @@
         let progressInterval = null;
 
         function processVideos() {
-            // Basic check & local preview
             const fileInput = document.getElementById("videoUpload");
             if (fileInput.files.length === 0) {
                 alert("Please select a video file to process.");
@@ -71,16 +69,18 @@
                 alert("Selected file is not a video.");
                 return;
             }
+
+            // Preview the video locally.
             const videoPlayer = document.getElementById("videoPlayer");
             videoPlayer.src = URL.createObjectURL(videoFile);
             videoPlayer.style.display = "block";
             videoPlayer.play();
 
-            // Show and reset progress bar
+            // Show progress bar & reset to 0
             document.getElementById("progressContainer").style.display = "block";
             updateProgressBar(0);
 
-            // Send the video to backend
+            // Send form data to backend
             const formData = new FormData(document.getElementById("uploadForm"));
             fetch("{% url 'process_video' %}", {
                 method: "POST",
@@ -96,7 +96,7 @@
                 }
             })
             .catch(err => {
-                console.error("Error starting processing:", err);
+                console.error("Error:", err);
                 updateProgressBar(0, true);
             });
         }
@@ -126,11 +126,11 @@
                 .then(data => {
                     if (typeof data.progress !== "undefined") {
                         updateProgressBar(data.progress);
-                        // Once we reach 100%, automatically download the CSV if available
+                        // Once we reach 100%, automatically download from data.csv_url
                         if (data.progress >= 100) {
                             stopPolling();
-                            if (data.csv_file) {
-                                downloadCSV(data.csv_file);
+                            if (data.csv_url) {
+                                downloadCSV(data.csv_url);
                             }
                         }
                     }
@@ -155,29 +155,29 @@
             }
         }
 
-        // Automatically download the CSV via a "Save As" dialog
-        function downloadCSV(csvPath) {
-            fetch(csvPath)
-                .then(res => {
-                    if (!res.ok) {
-                        throw new Error("Network response was not ok");
-                    }
-                    return res.blob();
-                })
-                .then(blob => {
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement("a");
-                    a.style.display = "none";
-                    a.href = url;
-                    a.download = "output_postprocessed.csv"; // suggested filename
-                    document.body.appendChild(a);
-                    a.click();
-                    window.URL.revokeObjectURL(url);
-                })
-                .catch(err => {
-                    console.error("Error fetching CSV file:", err);
-                    alert("An error occurred while fetching the CSV file.");
-                });
+        // Download the CSV from the server route (data.csv_url)
+        function downloadCSV(downloadUrl) {
+            fetch(downloadUrl)
+            .then(res => {
+                if (!res.ok) {
+                    throw new Error("Network response was not ok");
+                }
+                return res.blob();
+            })
+            .then(blob => {
+                const fileURL = window.URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.style.display = "none";
+                a.href = fileURL;
+                a.download = "output_postprocessed.csv"; // or any default filename
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(fileURL);
+            })
+            .catch(err => {
+                console.error("Error fetching CSV file:", err);
+                alert("An error occurred while fetching the CSV file.");
+            });
         }
     </script>
 </body>

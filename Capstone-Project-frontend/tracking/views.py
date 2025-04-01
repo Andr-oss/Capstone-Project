@@ -3,6 +3,8 @@ from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import sys, pathlib, os, multiprocessing
+from django.http import FileResponse, Http404
+from django.urls import reverse
 
 BASE_DIR = pathlib.Path(__file__).resolve().parent.parent
 sys.path.append(str(BASE_DIR.parent))
@@ -23,6 +25,21 @@ def new_videos_view(request):
 
 def livestream_view(request):
     return render(request, 'tracking/livestream.html')
+
+def download_final_csv(request):
+    """
+    Serves the final CSV file as a downloadable response.
+    """
+    from tracking.progress_manager import final_csv  # or wherever you keep progress state
+
+    # If there's no CSV path stored, raise a 404
+    if not final_csv:
+        raise Http404("No final CSV available.")
+
+    try:
+        return FileResponse(open(final_csv, 'rb'), as_attachment=True, filename='output_postprocessed.csv')
+    except FileNotFoundError:
+        raise Http404("CSV file not found on the server.")
 
 @csrf_exempt
 def process_video(request):
@@ -72,7 +89,12 @@ def stop_video(request):
 
 def get_progress(request):
     global progress_value, final_csv
+    download_url = None
+    # Only provide the download URL if the pipeline is finished and we have a final CSV path
+    if progress_value >= 100 and final_csv:
+        download_url = reverse('download_final_csv')  # e.g. "/download-final-csv/"
+
     return JsonResponse({
         'progress': progress_value,
-        'csv_file': final_csv if progress_value >= 100 else None
+        'csv_url': download_url,  # Return the URL for the frontend
     })

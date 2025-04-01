@@ -10,4 +10,5 @@ urlpatterns = [
     path('get-progress/', views.get_progress, name='get_progress'),  # Add this line
     path('download-csv/', views.download_csv, name='download_csv'),
     path('livestream/', views.livestream_view, name='livestream'),
+    path('download-final-csv/', views.download_final_csv, name='download_final_csv'),
 ]
