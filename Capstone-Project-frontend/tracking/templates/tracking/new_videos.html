@@ -6,6 +6,24 @@
     <meta charset="UTF-8">
     <title>New Videos - Rodent Video Tracking</title>
     <link rel="stylesheet" href="{% static 'tracking/css/style.css' %}">
+    <style>
+        /* Optional styling for progress bar */
+        #progressContainer {
+            width: 50%;
+            background-color: #f3f3f3;
+            border-radius: 5px;
+            margin-top: 20px;
+            display: none; /* Hidden until processing starts */
+        }
+        #progressBar {
+            width: 0%;
+            height: 20px;
+            background-color: #4caf50;
+            text-align: center;
+            color: #fff;
+            border-radius: 5px;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -14,9 +32,7 @@
             <!-- Form for video upload -->
             <form id="uploadForm" method="post" enctype="multipart/form-data">
                 {% csrf_token %}
-                <!-- File input to select multiple videos (visible for demo purposes) -->
                 <input type="file" id="videoUpload" name="videos" multiple accept="video/*">
-                <!-- Option select for processing model -->
                 <br>
                 <label for="modelOption">Select Processing Model:</label>
                 <select name="model_option" id="modelOption">
@@ -28,94 +44,140 @@
             <button type="button" onclick="processVideos()">Process</button>
             <button type="button" onclick="stopProcess()">Stop process</button>
         </div>
+
         <!-- Video player element; hidden by default -->
         <video id="videoPlayer" controls style="display: none; width: 100%; max-width: 600px; margin-top: 20px;">
             Your browser does not support the video tag.
         </video>
+
+        <!-- Progress bar elements -->
+        <div id="progressContainer">
+            <div id="progressBar">0%</div>
+        </div>
     </div>
 
     <script>
-        // Function to preview the uploaded video and process it.
+        let progressInterval = null;
+
         function processVideos() {
-            var fileInput = document.getElementById("videoUpload");
+            // Basic check & local preview
+            const fileInput = document.getElementById("videoUpload");
             if (fileInput.files.length === 0) {
                 alert("Please select a video file to process.");
                 return;
             }
-            // Take the first selected video file.
-            var videoFile = fileInput.files[0];
+            const videoFile = fileInput.files[0];
             if (!videoFile.type.startsWith("video/")) {
                 alert("Selected file is not a video.");
                 return;
             }
-
-            // Preview the video locally.
-            var videoPlayer = document.getElementById("videoPlayer");
-            var fileURL = URL.createObjectURL(videoFile);
-            videoPlayer.src = fileURL;
+            const videoPlayer = document.getElementById("videoPlayer");
+            videoPlayer.src = URL.createObjectURL(videoFile);
             videoPlayer.style.display = "block";
             videoPlayer.play();
 
-            // Create FormData from the upload form.
-            var formData = new FormData(document.getElementById("uploadForm"));
+            // Show and reset progress bar
+            document.getElementById("progressContainer").style.display = "block";
+            updateProgressBar(0);
 
-            // Send AJAX POST request to process the video.
+            // Send the video to backend
+            const formData = new FormData(document.getElementById("uploadForm"));
             fetch("{% url 'process_video' %}", {
                 method: "POST",
                 body: formData
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    alert("Error: " + data.error);
-                } else if (data.status === "Processing completed successfully" && data.csv_file) {
-                    // Automatically fetch the CSV file as a blob and trigger the Save As dialog.
-                    fetch(data.csv_file)
-                        .then(res => res.blob())
-                        .then(blob => {
-                            const url = window.URL.createObjectURL(blob);
-                            const a = document.createElement('a');
-                            a.style.display = 'none';
-                            a.href = url;
-                            a.download = 'output_postprocessed.csv';
-                            document.body.appendChild(a);
-                            a.click();
-                            window.URL.revokeObjectURL(url);
-                        })
-                        .catch(err => {
-                            console.error("Error fetching CSV file:", err);
-                            alert("An error occurred while fetching the CSV file.");
-                        });
-                }
-            })
-            .catch(error => {
-                console.error("Error during processing:", error);
-                alert("An error occurred during processing.");
-            });
-        }
-
-        // Function to pause/stop the video playback and send a stop request.
-        function stopProcess() {
-            var videoPlayer = document.getElementById("videoPlayer");
-            if (!videoPlayer.paused) {
-                videoPlayer.pause();
-            }
-            // Send stop request to backend.
-            fetch("{% url 'stop_video' %}", {
-                method: "POST",
-            })
-            .then(response => response.json())
+            .then(res => res.json())
             .then(data => {
                 if (data.error) {
                     alert("Error: " + data.error);
                 } else {
-                    alert("Process stopped: " + data.status);
+                    alert(data.status); // "Processing started"
+                    startPolling();
                 }
             })
-            .catch(error => {
-                console.error("Error during stop process:", error);
+            .catch(err => {
+                console.error("Error starting processing:", err);
+                updateProgressBar(0, true);
+            });
+        }
+
+        function stopProcess() {
+            const videoPlayer = document.getElementById("videoPlayer");
+            if (!videoPlayer.paused) {
+                videoPlayer.pause();
+            }
+            fetch("{% url 'stop_video' %}", { method: "POST" })
+            .then(res => res.json())
+            .then(data => {
+                alert(data.status);
+                stopPolling();
+                updateProgressBar(0, true);
+            })
+            .catch(err => {
+                console.error("Error stopping process:", err);
                 alert("An error occurred while stopping the process.");
             });
+        }
+
+        function startPolling() {
+            progressInterval = setInterval(() => {
+                fetch("{% url 'get_progress' %}")
+                .then(res => res.json())
+                .then(data => {
+                    if (typeof data.progress !== "undefined") {
+                        updateProgressBar(data.progress);
+                        // Once we reach 100%, automatically download the CSV if available
+                        if (data.progress >= 100) {
+                            stopPolling();
+                            if (data.csv_file) {
+                                downloadCSV(data.csv_file);
+                            }
+                        }
+                    }
+                })
+                .catch(err => console.error("Error polling progress:", err));
+            }, 1000);
+        }
+
+        function stopPolling() {
+            if (progressInterval) {
+                clearInterval(progressInterval);
+                progressInterval = null;
+            }
+        }
+
+        function updateProgressBar(value, hide=false) {
+            const bar = document.getElementById("progressBar");
+            bar.style.width = value + "%";
+            bar.textContent = value + "%";
+            if (hide) {
+                document.getElementById("progressContainer").style.display = "none";
+            }
+        }
+
+        // Automatically download the CSV via a "Save As" dialog
+        function downloadCSV(csvPath) {
+            fetch(csvPath)
+                .then(res => {
+                    if (!res.ok) {
+                        throw new Error("Network response was not ok");
+                    }
+                    return res.blob();
+                })
+                .then(blob => {
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.style.display = "none";
+                    a.href = url;
+                    a.download = "output_postprocessed.csv"; // suggested filename
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                })
+                .catch(err => {
+                    console.error("Error fetching CSV file:", err);
+                    alert("An error occurred while fetching the CSV file.");
+                });
         }
     </script>
 </body>
