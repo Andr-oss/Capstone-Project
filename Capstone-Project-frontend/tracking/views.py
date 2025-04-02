@@ -5,6 +5,11 @@ from django.views.decorators.csrf import csrf_exempt
 import sys, pathlib, os, multiprocessing
 from django.http import FileResponse, Http404
 from django.urls import reverse
+from tracking.progress_manager import get_shared_progress
+from django.http import FileResponse
+from django.conf import settings
+from django.http import HttpResponse
+import os
 
 BASE_DIR = pathlib.Path(__file__).resolve().parent.parent
 sys.path.append(str(BASE_DIR.parent))
@@ -13,7 +18,8 @@ sys.path.append(str(BASE_DIR.parent))
 import dlc_runner
 
 # Import shared state from progress_manager instead of defining here
-from tracking.progress_manager import progress_value, final_csv
+from tracking.progress_manager import get_shared_progress
+
 
 PROCESS = None
 
@@ -26,42 +32,49 @@ def new_videos_view(request):
 def livestream_view(request):
     return render(request, 'tracking/livestream.html')
 
-def download_final_csv(request):
-    """
-    Serves the final CSV file as a downloadable response.
-    """
-    from tracking.progress_manager import final_csv  # or wherever you keep progress state
+from django.http import FileResponse, Http404
 
-    # If there's no CSV path stored, raise a 404
-    if not final_csv:
+def download_final_csv(request):
+    global final_csv
+
+    if not final_csv or not final_csv.value:
         raise Http404("No final CSV available.")
 
     try:
-        return FileResponse(open(final_csv, 'rb'), as_attachment=True, filename='output_postprocessed.csv')
+        return FileResponse(open(final_csv.value, 'rb'), as_attachment=True, filename='output_postprocessed.csv')
     except FileNotFoundError:
         raise Http404("CSV file not found on the server.")
 
+
+
+from tracking.progress_manager import get_shared_progress
+
 @csrf_exempt
 def process_video(request):
-    global PROCESS, progress_value, final_csv
+    global PROCESS
     if request.method == 'POST':
         uploaded_file = request.FILES.get('videos')
         if not uploaded_file:
             return JsonResponse({'error': 'No video file found'}, status=400)
 
-        # Reset progress/csv at the start
-        progress_value = 0
-        final_csv = None
+        #  Get shared manager values
+        progress_value, final_csv = get_shared_progress()
 
+        # Reset progress
+        progress_value.value = 0
+        final_csv.value = ""
+
+        # Save uploaded video to a temp path
         temp_video_path = os.path.join(BASE_DIR, 'temp_upload_' + uploaded_file.name)
         with open(temp_video_path, 'wb') as f:
             for chunk in uploaded_file.chunks():
                 f.write(chunk)
 
         try:
+            #  Start the DLC processing in a subprocess
             PROCESS = multiprocessing.Process(
                 target=dlc_runner.run_dlc_pipeline,
-                args=(temp_video_path,)
+                args=(temp_video_path, progress_value, final_csv)
             )
             PROCESS.start()
         except Exception as e:
@@ -70,6 +83,7 @@ def process_video(request):
         return JsonResponse({'status': 'Processing started'})
     else:
         return JsonResponse({'error': 'Invalid request method'}, status=400)
+
 
 @csrf_exempt
 def stop_video(request):
@@ -88,13 +102,25 @@ def stop_video(request):
         return JsonResponse({'error': 'Invalid request method'}, status=400)
 
 def get_progress(request):
-    global progress_value, final_csv
-    download_url = None
-    # Only provide the download URL if the pipeline is finished and we have a final CSV path
-    if progress_value >= 100 and final_csv:
-        download_url = reverse('download_final_csv')  # e.g. "/download-final-csv/"
+    progress_value, final_csv = get_shared_progress()
+
+    if progress_value.value >= 100 and final_csv.value:
+        return JsonResponse({
+            'progress': progress_value.value,
+            'csv_url': f'/download/{os.path.basename(final_csv.value)}'
+        })
 
     return JsonResponse({
-        'progress': progress_value,
-        'csv_url': download_url,  # Return the URL for the frontend
+        'progress': progress_value.value,
+        'csv_url': None
     })
+@csrf_exempt
+def download_file(request, filename):
+    from tracking.progress_manager import get_shared_progress
+    _, final_csv = get_shared_progress()
+
+    if not final_csv.value or not os.path.exists(final_csv.value):
+        raise Http404("File not found")
+
+    return FileResponse(open(final_csv.value, 'rb'), as_attachment=True, filename=filename)
+

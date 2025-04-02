@@ -35,13 +35,17 @@
                 <br>
                 <label for="modelOption">Select Processing Model:</label>
                 <select name="model_option" id="modelOption">
-                    <option value="deeplabcut">Deeplabcut</option>
-                    <option value="roboflow">Roboflow</option>
+                    <option value="deeplabcut">Deeplabcut (Active)</option>
+                    <option value="roboflow">Roboflow (Not Active)</option>
                 </select>
             </form>
             <!-- Control buttons -->
             <button type="button" onclick="processVideos()">Process</button>
             <button type="button" onclick="stopProcess()">Stop process</button>
+            <input type="file" id="csvInput" accept=".csv" style="display: none;" onchange="uploadAndVisualizeCSV()">
+            <button type="button" onclick="document.getElementById('csvUpload').click()">Visualize CSV</button>
+            <input type="file" id="csvUpload" style="display: none;" accept=".csv" onchange="uploadAndVisualizeCSV()">
+            <div id="visualizationResult" style="margin-top: 20px;"></div>
         </div>
 
         <!-- Video player element; hidden by default -->
@@ -53,7 +57,15 @@
         <div id="progressContainer">
             <div id="progressBar">0%</div>
         </div>
-    </div>
+
+        <!-- Download button (VISIBLE only after 100% progress) -->
+        <a id="downloadBtn"
+           href="#"
+           style="display: none; margin-top: 15px; padding: 10px 20px; background-color: #4caf50; color: white; border: none; border-radius: 5px; text-decoration: none;">
+           ⬇ Download CSV
+        </a>
+        </div> <!-- Keep this as the end of .container -->
+
 
     <script>
         let progressInterval = null;
@@ -120,24 +132,28 @@
         }
 
         function startPolling() {
-            progressInterval = setInterval(() => {
-                fetch("{% url 'get_progress' %}")
-                .then(res => res.json())
-                .then(data => {
-                    if (typeof data.progress !== "undefined") {
-                        updateProgressBar(data.progress);
-                        // Once we reach 100%, automatically download from data.csv_url
-                        if (data.progress >= 100) {
-                            stopPolling();
-                            if (data.csv_url) {
-                                downloadCSV(data.csv_url);
-                            }
-                        }
+    progressInterval = setInterval(() => {
+        fetch("{% url 'get_progress' %}")
+        .then(res => res.json())
+        .then(data => {
+            if (typeof data.progress !== "undefined") {
+                updateProgressBar(data.progress);
+
+                // Show download button only if processing is 100% done
+                if (data.progress >= 100) {
+                    stopPolling();
+                    if (data.csv_url) {
+                        const downloadBtn = document.getElementById("downloadBtn");
+                        downloadBtn.href = data.csv_url;
+                        downloadBtn.style.display = "inline-block"; // 👈 Show it now
                     }
-                })
-                .catch(err => console.error("Error polling progress:", err));
-            }, 1000);
-        }
+                }
+            }
+        })
+        .catch(err => console.error("Error polling progress:", err));
+    }, 1000); // Poll every 1s
+}
+
 
         function stopPolling() {
             if (progressInterval) {
@@ -156,29 +172,34 @@
         }
 
         // Download the CSV from the server route (data.csv_url)
-        function downloadCSV(downloadUrl) {
-            fetch(downloadUrl)
-            .then(res => {
-                if (!res.ok) {
-                    throw new Error("Network response was not ok");
-                }
-                return res.blob();
-            })
-            .then(blob => {
-                const fileURL = window.URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.style.display = "none";
-                a.href = fileURL;
-                a.download = "output_postprocessed.csv"; // or any default filename
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(fileURL);
-            })
-            .catch(err => {
-                console.error("Error fetching CSV file:", err);
-                alert("An error occurred while fetching the CSV file.");
-            });
-        }
+     function downloadCSV(downloadUrl) {
+         fetch(downloadUrl)
+        .then(res => {
+            if (!res.ok) {
+                throw new Error("Network response was not ok");
+            }
+            return res.blob();
+        })
+        .then(blob => {
+            const fileURL = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.style.display = "none";
+            a.href = fileURL;
+
+            // 👇 Prompt for filename
+            const filename = prompt("Enter a name for the CSV file:", "output_postprocessed.csv");
+            a.download = filename || "output_postprocessed.csv";
+
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(fileURL);
+        })
+        .catch(err => {
+            console.error("Error fetching CSV file:", err);
+            alert("An error occurred while fetching the CSV file.");
+        });
+     }
+
     </script>
 </body>
 </html>
