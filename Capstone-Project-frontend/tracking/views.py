@@ -17,8 +17,11 @@ PROCESS = None
 def dashboard_view(request):
     return render(request, 'tracking/dashboard.html')
 
-def new_videos_view(request):
-    return render(request, 'tracking/new_videos.html')
+def process_view(request):
+    return render(request, 'tracking/Process.html')
+
+def visualize_view(request):
+    return render(request, 'tracking/visualize.html')
 
 def download_csv(request):
     response = HttpResponse(content_type='text/csv')

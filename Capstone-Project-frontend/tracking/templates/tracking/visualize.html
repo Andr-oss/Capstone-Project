@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <title>Visualize - Rodent Video Tracking</title>
+    <link rel="stylesheet" href="{% static 'tracking/css/style.css' %}">
+</head>
+<body>
+    <div class="container">
+        <h1>New Videos</h1>
+        <div>
+            <!-- Form for video upload -->
+            <form id="uploadForm" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <!-- File input to select multiple videos (visible for demo purposes) -->
+                <input type="file" id="videoUpload" name="videos" multiple accept="video/*">
+                <!-- New: Option select for processing model -->
+                <br>
+                <label for="modelOption">Select Processing Model:</label>
+                <select name="model_option" id="modelOption">
+                    <option value="deeplabcut">Deeplabcut</option>
+                    <option value="roboflow">Roboflow</option>
+                </select>
+            </form>
+            <!-- Other buttons -->
+            <button type="button" onclick="processVideos()">Process</button>
+            <button type="button" onclick="stopProcess()">Stop process</button>
+            <button type="button" onclick="downloadVideos()">Download</button>
+        </div>
+        <!-- Video player element; hidden by default -->
+        <video id="videoPlayer" controls style="display: none; width: 100%; max-width: 600px; margin-top: 20px;">
+            Your browser does not support the video tag.
+        </video>
+    </div>
