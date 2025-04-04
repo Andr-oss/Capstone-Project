@@ -3,7 +3,7 @@ from pathlib import Path
 import os
 import glob
 import pandas as pd
-from post_process import postprocess_csv
+from .post_process import postprocess_csv
 
 
 def run_dlc_pipeline(video_path: str,

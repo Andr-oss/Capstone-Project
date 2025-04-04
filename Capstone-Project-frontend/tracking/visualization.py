@@ -384,6 +384,7 @@ class RodentVisualizerCV:
         cv2.destroyAllWindows()
 
 
+
 # Example usage
 if __name__ == "__main__":
     # Replace with your actual CSV file path
