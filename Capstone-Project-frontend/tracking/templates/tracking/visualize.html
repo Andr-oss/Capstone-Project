@@ -5,22 +5,43 @@
     <meta charset="UTF-8">
     <title>Visualize - Rodent Video Tracking</title>
     <link rel="stylesheet" href="{% static 'tracking/css/style.css' %}">
+    <style>
+        .status-message {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            display: none;
+        }
+        .status-message.success {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .status-message.error {
+            background-color: #f44336;
+            color: white;
+        }
+        .status-message.info {
+            background-color: #2196F3;
+            color: white;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
         <h1>Select CSV file to visualize</h1>
+        <div id="statusMessage" class="status-message"></div>
         <div>
             <form id="uploadForm" method="post" enctype="multipart/form-data" action="{% url 'run_visualize' %}">
                 {% csrf_token %}
 
                 <div class="form-group">
                     <label for="csvUpload">Upload CSV File:</label>
-                    <input type="file" id="csvUpload" name="csv_files" multiple accept=".csv">
+                    <input type="file" id="csvUpload" name="csv_files" accept=".csv" required>
                 </div>
 
                 <div class="form-group">
-                    <label for="videoUpload">Upload Video:</label>
-                    <input type="file" id="videoUpload" name="videos" multiple accept="video/*">
+                    <label for="videoUpload">Upload Video (optional):</label>
+                    <input type="file" id="videoUpload" name="videos" accept="video/*">
                 </div>
 
                 <div class="form-group">
@@ -32,7 +53,6 @@
                     <span id="trailLengthValue">10</span>
                 </div>
                 <br>
-
 
                 <div class="form-group">
                     <label><input type="checkbox" id="showTrajectory" name="show_trajectory" checked> Show Trajectory</label>
@@ -73,6 +93,18 @@
     </div>
 
     <script>
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('statusMessage');
+            statusDiv.textContent = message;
+            statusDiv.className = 'status-message ' + type;
+            statusDiv.style.display = 'block';
+
+            // Hide after 3 seconds
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 3000);
+        }
+
         // Update the trail length value when slider is moved
         document.getElementById('trailLength').addEventListener('input', function() {
             document.getElementById('trailLengthValue').textContent = this.value;
@@ -86,6 +118,38 @@
         // Update the segmentation opacity value when slider is moved
         document.getElementById('segmentationOpacity').addEventListener('input', function() {
             document.getElementById('segmentationOpacityValue').textContent = this.value;
+        });
+
+        // Form submission handler
+        document.getElementById('uploadForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const csvFile = document.getElementById('csvUpload').files[0];
+            if (!csvFile) {
+                showStatus('Please select a CSV file', 'error');
+                return;
+            }
+
+            showStatus('Starting visualization...', 'info');
+
+            const formData = new FormData(this);
+
+            fetch(this.action, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'error') {
+                    showStatus('Error: ' + data.message, 'error');
+                } else {
+                    showStatus('Visualization started successfully', 'success');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showStatus('An error occurred during visualization', 'error');
+            });
         });
     </script>
 </body>
