@@ -10,25 +10,26 @@
     <div class="container">
         <h1>Select CSV file to visualize</h1>
         <div>
-            <form id="uploadForm" method="post" enctype="multipart/form-data">
+            <form id="uploadForm" method="post" enctype="multipart/form-data" action="{% url 'run_visualize' %}">
                 {% csrf_token %}
+
                 <div class="form-group">
-                    <label for="videoUpload">Upload Videos:</label>
-                    <input type="file" id="videoUpload" name="videos" multiple accept="video/*">
+                    <label for="csvUpload">Upload CSV File:</label>
+                    <input type="file" id="csvUpload" name="csv_files" multiple accept=".csv">
                 </div>
 
                 <div class="form-group">
-                    <label for="csvUpload">Upload CSV Files:</label>
-                    <input type="file" id="csvUpload" name="csv_files" multiple accept=".csv">
+                    <label for="videoUpload">Upload Video:</label>
+                    <input type="file" id="videoUpload" name="videos" multiple accept="video/*">
                 </div>
 
                 <div class="form-group">
                     <label><input type="checkbox" id="showTrails" name="show_trails"> Show Trails</label>
                 </div>
                 <div class="form-group">
-                    <label for="trailLength">Trail Length (0-50):</label>
-                    <input type="range" id="trailLength" name="trail_length" min="0" max="50" value="25">
-                    <span id="trailLengthValue">25</span>
+                    <label for="trailLength">Trail Length:</label>
+                    <input type="range" id="trailLength" name="trail_length" min="0" max="50" value="10">
+                    <span id="trailLengthValue">10</span>
                 </div>
                 <br>
 
@@ -66,7 +67,7 @@
                 </div>
                 <br>
 
-                <button type="button" onclick="">Visualize</button>
+                <button type="submit">Visualize</button>
             </form>
         </div>
     </div>

@@ -10,5 +10,6 @@ urlpatterns = [
     path('download-csv/', views.download_csv, name='download_csv'),
     path('livestream/', views.livestream_view, name='livestream'),
     path('visualize/', views.visualize_view, name='visualize'),
+    path('run-visualize/', views.run_visualize, name='run_visualize'),
 ]
 

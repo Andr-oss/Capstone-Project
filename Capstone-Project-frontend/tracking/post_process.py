@@ -1,23 +1,23 @@
 import pandas as pd
 import numpy as np
 
-
-def estimate_missing_part(part, row):
-    if part == 'Right_Ear' and not (pd.isna(row["Nose_x"]) or pd.isna(row["Left_Ear_x"])):
-        return 2 * row["Nose_x"] - row["Left_Ear_x"], 2 * row["Nose_y"] - row["Left_Ear_y"]
-    elif part == 'Left_Ear' and not (pd.isna(row["Nose_x"]) or pd.isna(row["Right_Ear_x"])):
-        return 2 * row["Nose_x"] - row["Right_Ear_x"], 2 * row["Nose_y"] - row["Right_Ear_y"]
-    elif part == 'Nose' and not (pd.isna(row["Left_Ear_x"]) or pd.isna(row["Right_Ear_x"])):
-        return (row["Left_Ear_x"] + row["Right_Ear_x"]) / 2, (row["Left_Ear_y"] + row["Right_Ear_y"]) / 2
-    elif part == 'Right_Body' and not (pd.isna(row["Body_Center_x"]) or pd.isna(row["Left_Body_x"])):
-        return 2 * row["Body_Center_x"] - row["Left_Body_x"], 2 * row["Body_Center_y"] - row["Left_Body_y"]
-    elif part == 'Left_Body' and not (pd.isna(row["Body_Center_x"]) or pd.isna(row["Right_Body_x"])):
-        return 2 * row["Body_Center_x"] - row["Right_Body_x"], 2 * row["Body_Center_y"] - row["Right_Body_y"]
-    elif part == 'Tail_Base' and not pd.isna(row["Body_Center_x"]):
-        return row["Body_Center_x"], row["Body_Center_y"] + 10
-    return np.nan, np.nan
-
 def postprocess_csv(input_file, output_file):
+
+    def estimate_missing_part(part, row):
+        if part == 'Right_Ear' and not (pd.isna(row["Nose_x"]) or pd.isna(row["Left_Ear_x"])):
+            return 2 * row["Nose_x"] - row["Left_Ear_x"], 2 * row["Nose_y"] - row["Left_Ear_y"]
+        elif part == 'Left_Ear' and not (pd.isna(row["Nose_x"]) or pd.isna(row["Right_Ear_x"])):
+            return 2 * row["Nose_x"] - row["Right_Ear_x"], 2 * row["Nose_y"] - row["Right_Ear_y"]
+        elif part == 'Nose' and not (pd.isna(row["Left_Ear_x"]) or pd.isna(row["Right_Ear_x"])):
+            return (row["Left_Ear_x"] + row["Right_Ear_x"]) / 2, (row["Left_Ear_y"] + row["Right_Ear_y"]) / 2
+        elif part == 'Right_Body' and not (pd.isna(row["Body_Center_x"]) or pd.isna(row["Left_Body_x"])):
+            return 2 * row["Body_Center_x"] - row["Left_Body_x"], 2 * row["Body_Center_y"] - row["Left_Body_y"]
+        elif part == 'Left_Body' and not (pd.isna(row["Body_Center_x"]) or pd.isna(row["Right_Body_x"])):
+            return 2 * row["Body_Center_x"] - row["Right_Body_x"], 2 * row["Body_Center_y"] - row["Right_Body_y"]
+        elif part == 'Tail_Base' and not pd.isna(row["Body_Center_x"]):
+            return row["Body_Center_x"], row["Body_Center_y"] + 10
+        return np.nan, np.nan
+
     df = pd.read_csv(input_file, header=[1, 2])
     df.columns = [f"{col1}_{col2}" if pd.notna(col2) else col1 for col1, col2 in df.columns]
     df.rename(columns={df.columns[0]: "Frame"}, inplace=True)
