@@ -10,7 +10,7 @@ BASE_DIR = pathlib.Path(__file__).resolve().parent.parent.parent
 sys.path.append(str(BASE_DIR))
 
 import cv2
-from tracking import visualization
+import visualization
 
 
 def write_status(status):

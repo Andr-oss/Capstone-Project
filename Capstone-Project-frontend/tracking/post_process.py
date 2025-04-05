@@ -2,8 +2,20 @@ import pandas as pd
 import numpy as np
 
 def postprocess_csv(input_file, output_file):
+    """
+    Process the file to prepare for visualization.
+    Parameters:
+        input_file (str): Path to the input csv file.
+        output_file (str): Path to the output csv file.
+    """
 
     def estimate_missing_part(part, row):
+        """
+        Estimate the missing part if missing in file.
+        Parameters:
+            part (str): Part missing.
+            row (pd.Series): Row of the file.
+        """
         if part == 'Right_Ear' and not (pd.isna(row["Nose_x"]) or pd.isna(row["Left_Ear_x"])):
             return 2 * row["Nose_x"] - row["Left_Ear_x"], 2 * row["Nose_y"] - row["Left_Ear_y"]
         elif part == 'Left_Ear' and not (pd.isna(row["Nose_x"]) or pd.isna(row["Right_Ear_x"])):
@@ -23,6 +35,13 @@ def postprocess_csv(input_file, output_file):
     df.rename(columns={df.columns[0]: "Frame"}, inplace=True)
 
     def find_centroid(p1, p2, p3):
+        """
+        Find the centroid of three points.
+        Parameters:
+            p1 (pd.Series): First point.
+            p2 (pd.Series): Second point.
+            p3 (pd.Series): Third point.
+        """
         if (pd.isna(p1[0]) or pd.isna(p1[1]) or
                 pd.isna(p2[0]) or pd.isna(p2[1]) or
                 pd.isna(p3[0]) or pd.isna(p3[1])):

@@ -4,6 +4,13 @@ import cv2
 
 
 def normalize_coords(self, x, y):
+    """
+    Normalizes the coordinates so that they lie in the range of the popup window.
+    Parameters:
+        self (object):  The object the coordinates belong to.
+        x (point): The x coordinate.
+        y (point): The y coordinate.
+    """
     # Convert data coordinates to pixel coordinates with bounds checking
     norm_x = int((x - self.min_x) / (self.max_x - self.min_x) * (self.width - 40) + 20)
     norm_y = int((y - self.min_y) / (self.max_y - self.min_y) * (self.height - 40) + 20)
@@ -17,9 +24,29 @@ def normalize_coords(self, x, y):
 
 
 class RodentVisualizerCV:
+    """
+    Object that initializes and runs the visualization.
+    """
     def __init__(self, csv_path, video_path=None, width=800, height=600, trail_length=None,
                  show_trails=False, show_trajectory=True, trajectory_opacity=0.3, show_connections=True, show_segmentation=True,
                  segmentation_opacity=0.5, show_labels=True, show_legend=True):
+        """
+        Initializes the visualization.
+        Parameters:
+            csv_path (string): Path to the csv file.
+            video_path (string): Path to the video file.
+            width (int): Width of the visualization.
+            height (int): Height of the visualization.
+            trail_length (int): Length of the trail.
+            show_trails (bool): Show the trails.
+            show_trajectory (bool): Show the trajectory.
+            trajectory_opacity (float): Opacity of the trajectory.
+            show_connections (bool): Show the connections.
+            show_segmentation (bool): Show the segmentation.
+            segmentation_opacity (float): Opacity of the segmentation.
+            show_labels (bool): Show the labels.
+            show_legend (bool): Show the legend.
+        """
         # Load the data
         self.data = pd.read_csv(csv_path)
 
@@ -133,6 +160,7 @@ class RodentVisualizerCV:
 
     @staticmethod
     def _draw_t_maze(canvas):
+        """draws the T-Maze in canvas"""
         # Maze color (dark gray)
         maze_color = (0, 0, 0)
         wall_thickness = 5
@@ -174,7 +202,7 @@ class RodentVisualizerCV:
 
 
     def display_animation(self, delay=30):
-
+        """Displays the animation."""
         if self.video_path:
             self.video_capture.set(cv2.CAP_PROP_POS_FRAMES, 0)
             self.width = int(self.video_capture.get(cv2.CAP_PROP_FRAME_WIDTH))

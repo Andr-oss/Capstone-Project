@@ -3,6 +3,11 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 def plot_separate_coordinates(csv_file):
+    """
+    Plots trajectory of different parts of the rodent on a graph.
+    Parameters:
+        csv_file (csv):  path to the video file.
+    """
     # Check if the CSV file exists
     if not os.path.exists(csv_file):
         print(f"Error: File '{csv_file}' not found.")
