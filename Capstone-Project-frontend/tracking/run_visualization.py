@@ -4,12 +4,12 @@ import pathlib
 import signal
 import json
 import atexit
+import cv2
 
 # Add the parent directory to sys.path
 BASE_DIR = pathlib.Path(__file__).resolve().parent.parent.parent
 sys.path.append(str(BASE_DIR))
 
-import cv2
 from tracking import visualization
 
 
