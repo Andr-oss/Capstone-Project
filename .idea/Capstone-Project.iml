@@ -5,6 +5,7 @@
       <sourceFolder url="file://$MODULE_DIR$/Capstone-Project-frontend" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/.venv" />
       <excludeFolder url="file://$MODULE_DIR$/.venv1" />
+      <excludeFolder url="file://$MODULE_DIR$/Capstone-Project-frontend/.venv" />
     </content>
     <orderEntry type="jdk" jdkName="Python 3.10 (Capstone-Project)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />

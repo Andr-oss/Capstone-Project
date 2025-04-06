@@ -138,12 +138,12 @@
                 method: 'POST',
                 body: formData
             })
-            .then(response => response.json())
+            .then(response => response.json(); showStatus('Started Visualization', 'success'))
             .then(data => {
                 if (data.status === 'error') {
                     showStatus('Error: ' + data.message, 'error');
                 } else {
-                    showStatus('Visualization started successfully', 'success');
+                    showStatus('Ended Visualization', 'success');
                 }
             })
             .catch(error => {
