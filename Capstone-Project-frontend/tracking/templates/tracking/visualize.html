@@ -130,7 +130,7 @@
                 return;
             }
 
-            showStatus('Starting visualization...', 'info');
+            showStatus('Starting visualization...', 'success');
 
             const formData = new FormData(this);
 
@@ -138,12 +138,12 @@
                 method: 'POST',
                 body: formData
             })
-            .then(response => response.json(); showStatus('Started Visualization', 'success'))
+            .then(response => response.json())
             .then(data => {
                 if (data.status === 'error') {
                     showStatus('Error: ' + data.message, 'error');
                 } else {
-                    showStatus('Ended Visualization', 'success');
+                    showStatus('Ended Visualization', 'info');
                 }
             })
             .catch(error => {

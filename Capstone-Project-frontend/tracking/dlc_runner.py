@@ -7,7 +7,7 @@ from .post_process import postprocess_csv
 
 
 def run_dlc_pipeline(video_path: str,
-                     config_path: str = r"D:/Capstone-Project/AndrewFirstTraining-Andrew-2025-03-08/config.yaml"):
+                     config_path: str = r"C:\Users\Bazil\Downloads\AndrewFirstTraining-Andrew-2025-03-08\config.yaml"):
     """
     Runs DeepLabCut analysis and post-processing for a given video.
     Parameters:

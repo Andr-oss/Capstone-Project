@@ -1,9 +1,10 @@
 import csv
-import sys, pathlib, os, multiprocessing
+import sys, pathlib, os, multiprocessing, time, subprocess
 import tempfile
+import json
 
 from django.shortcuts import render
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, JsonResponse, FileResponse, Http404
 from django.views.decorators.csrf import csrf_exempt
 from .run_visualization import run_visualization
 
@@ -14,37 +15,92 @@ sys.path.append(str(BASE_DIR.parent))
 # Import your backend function from dlc_runner
 from tracking import dlc_runner
 
-# Global variable to hold the background processing process
+# Global variables
 PROCESS = None
+VIS_PROCESS = None  # For visualization process tracking
+PROCESSING_STATUS = {"status": "idle", "csv_file": None}  # Track processing status
+
 
 def dashboard_view(request):
     return render(request, 'tracking/dashboard.html')
 
+
 def process_view(request):
     return render(request, 'tracking/Process.html')
+
 
 def visualize_view(request):
     return render(request, 'tracking/visualize.html')
 
+
 def download_csv(request):
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename="tracking_data.csv"'
-    writer = csv.writer(response)
-    writer.writerow([
-        "Frame",
-        "Middle_rat_X",
-        "middle_rat_Y",
-        "middle_rat_height",
-        "middle_rat_width",
-        "Head_rat_X",
-        "Head_rat_Y",
-        "Head_rat_height",
-        "Head_rat_width"
-    ])
-    return response
+    # Check if specific file was requested
+    file_path = request.GET.get('file')
+
+    if file_path and os.path.exists(file_path):
+        # Return the specific file
+        return FileResponse(open(file_path, 'rb'),
+                            as_attachment=True,
+                            filename=os.path.basename(file_path))
+    else:
+        # Fallback to the general CSV template
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="tracking_data.csv"'
+        writer = csv.writer(response)
+        writer.writerow([
+            "Frame",
+            "Middle_rat_X",
+            "middle_rat_Y",
+            "middle_rat_height",
+            "middle_rat_width",
+            "Head_rat_X",
+            "Head_rat_Y",
+            "Head_rat_height",
+            "Head_rat_width"
+        ])
+        return response
+
 
 def livestream_view(request):
     return render(request, 'tracking/livestream.html')
+
+
+def check_visualization_status(request):
+    """Check the status of the visualization process"""
+    status_file = os.path.join(BASE_DIR, 'temp_visualizations', 'vis_status.json')
+    try:
+        with open(status_file, 'r') as f:
+            status = json.load(f)
+            return JsonResponse(status)
+    except:
+        return JsonResponse({'status': 'unknown'})
+
+
+@csrf_exempt
+def check_processing_status(request):
+    """Returns the current status of the video processing"""
+    global PROCESSING_STATUS
+    return JsonResponse(PROCESSING_STATUS)
+
+
+# Helper function to run DLC in a separate process and track status
+def run_dlc_and_track_status(video_path):
+    global PROCESSING_STATUS
+    try:
+        PROCESSING_STATUS = {"status": "processing", "csv_file": None}
+        # Run the DLC pipeline
+        output_csv = dlc_runner.run_dlc_pipeline(video_path)
+        # Update status when complete
+        PROCESSING_STATUS = {"status": "complete", "csv_file": output_csv}
+    except Exception as e:
+        PROCESSING_STATUS = {"status": "error", "message": str(e)}
+        # Make sure to clean up the temp file if there's an error
+        try:
+            if os.path.exists(video_path):
+                os.remove(video_path)
+        except:
+            pass
+
 
 @csrf_exempt
 def process_video(request):
@@ -52,28 +108,36 @@ def process_video(request):
     Handles the uploaded video, starts the run_dlc_pipeline function in a background process,
     and returns a JSON response indicating that processing has started.
     """
-    global PROCESS
+    global PROCESS, PROCESSING_STATUS
     if request.method == 'POST':
         uploaded_file = request.FILES.get('videos')
         if not uploaded_file:
             return JsonResponse({'error': 'No video file found'}, status=400)
+
+        # Reset status
+        PROCESSING_STATUS = {"status": "starting", "csv_file": None}
+
         # Save the uploaded file temporarily
         temp_video_path = os.path.join(BASE_DIR, 'temp_upload_' + uploaded_file.name)
         with open(temp_video_path, 'wb') as f:
             for chunk in uploaded_file.chunks():
                 f.write(chunk)
+
         try:
             # Start the processing in a separate process
             PROCESS = multiprocessing.Process(
-                target=dlc_runner.run_dlc_pipeline,
+                target=run_dlc_and_track_status,
                 args=(temp_video_path,)
             )
             PROCESS.start()
         except Exception as e:
+            PROCESSING_STATUS = {"status": "error", "message": str(e)}
             return JsonResponse({'error': str(e)}, status=500)
+
         return JsonResponse({'status': 'Processing started'})
     else:
         return JsonResponse({'error': 'Invalid request method'}, status=400)
+
 
 @csrf_exempt
 def stop_video(request):
@@ -81,17 +145,117 @@ def stop_video(request):
     Handles the stop process request.
     Terminates the background process running run_dlc_pipeline.
     """
-    global PROCESS
+    global PROCESS, PROCESSING_STATUS
     if request.method == 'POST':
         if PROCESS is not None and PROCESS.is_alive():
             PROCESS.terminate()
             PROCESS.join()
             PROCESS = None
+            PROCESSING_STATUS = {"status": "idle", "csv_file": None}
             return JsonResponse({'status': 'Process stopped'})
         else:
             return JsonResponse({'status': 'No active process'})
     else:
         return JsonResponse({'error': 'Invalid request method'}, status=400)
+
+
+@csrf_exempt
+def visualize_csv(request):
+    global VIS_PROCESS
+    if request.method == 'POST':
+        if request.FILES.get('csv_file'):
+            # Stop any existing visualization
+            if VIS_PROCESS is not None:
+                try:
+                    VIS_PROCESS.terminate()
+                    VIS_PROCESS.wait(timeout=1)
+                except:
+                    pass
+                VIS_PROCESS = None
+
+            csv_file = request.FILES['csv_file']
+
+            # Create a persistent temporary directory if it doesn't exist
+            temp_dir = os.path.join(BASE_DIR, 'temp_visualizations')
+            os.makedirs(temp_dir, exist_ok=True)
+
+            # Clean up old visualization files
+            try:
+                for old_file in os.listdir(temp_dir):
+                    try:
+                        os.remove(os.path.join(temp_dir, old_file))
+                    except:
+                        pass
+            except:
+                pass
+
+            # Save the uploaded file with a unique name
+            temp_path = os.path.join(temp_dir, f'vis_{int(time.time())}_{csv_file.name}')
+
+            with open(temp_path, 'wb+') as destination:
+                for chunk in csv_file.chunks():
+                    destination.write(chunk)
+
+            try:
+                # Start the visualization using subprocess
+                script_path = os.path.join(BASE_DIR, 'tracking', 'visualization_handler.py')
+                VIS_PROCESS = subprocess.Popen([sys.executable, script_path, temp_path])
+
+                # Write initial status
+                with open(os.path.join(temp_dir, 'vis_status.json'), 'w') as f:
+                    json.dump({'status': 'starting'}, f)
+
+                return JsonResponse({
+                    'status': 'Visualization started',
+                    'message': 'The visualization window should open shortly. Press ESC in the visualization window or click Stop Visualization to close it.'
+                })
+
+            except Exception as e:
+                # Only delete the file if there's an error
+                try:
+                    os.remove(temp_path)
+                except:
+                    pass
+                return JsonResponse({'error': str(e)}, status=500)
+
+        return JsonResponse({'error': 'No CSV file provided'}, status=400)
+
+    elif request.method == 'DELETE':
+        # Handle stopping visualization
+        if VIS_PROCESS is not None:
+            try:
+                VIS_PROCESS.terminate()
+                VIS_PROCESS.wait(timeout=1)
+            except:
+                pass
+            VIS_PROCESS = None
+
+            # Clean up visualization files
+            temp_dir = os.path.join(BASE_DIR, 'temp_visualizations')
+            try:
+                for old_file in os.listdir(temp_dir):
+                    try:
+                        os.remove(os.path.join(temp_dir, old_file))
+                    except:
+                        pass
+            except:
+                pass
+
+            return JsonResponse({'status': 'Visualization stopped'})
+        return JsonResponse({'status': 'No visualization running'})
+
+    return JsonResponse({'error': 'Invalid request method'}, status=400)
+
+
+def serve_visualization(request, temp_dir, filename):
+    """Serve the visualization HTML file"""
+    file_path = os.path.join(tempfile.gettempdir(), temp_dir, filename)
+    if os.path.exists(file_path):
+        with open(file_path, 'r') as f:
+            content = f.read()
+        return HttpResponse(content, content_type='text/html')
+    raise Http404("Visualization not found")
+
 
 def run_visualize(request):
     if request.method == 'POST':

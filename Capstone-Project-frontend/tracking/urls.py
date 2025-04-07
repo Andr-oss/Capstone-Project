@@ -11,5 +11,6 @@ urlpatterns = [
     path('livestream/', views.livestream_view, name='livestream'),
     path('visualize/', views.visualize_view, name='visualize'),
     path('run-visualize/', views.run_visualize, name='run_visualize'),
+    path('check_processing_status/', views.check_processing_status, name='check_processing_status'),
 ]
 
