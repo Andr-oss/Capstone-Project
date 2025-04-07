@@ -2,6 +2,7 @@ import csv
 import sys, pathlib, os, multiprocessing, time, subprocess
 import tempfile
 import json
+import shutil
 
 from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse, FileResponse, Http404
@@ -84,12 +85,12 @@ def check_processing_status(request):
 
 
 # Helper function to run DLC in a separate process and track status
-def run_dlc_and_track_status(video_path):
+def run_dlc_and_track_status(video_path, output_directory=None):
     global PROCESSING_STATUS
     try:
         PROCESSING_STATUS = {"status": "processing", "csv_file": None}
-        # Run the DLC pipeline
-        output_csv = dlc_runner.run_dlc_pipeline(video_path)
+        # Run the DLC pipeline with the specified output directory
+        output_csv = dlc_runner.run_dlc_pipeline(video_path, output_directory=output_directory)
         # Update status when complete
         PROCESSING_STATUS = {"status": "complete", "csv_file": output_csv}
     except Exception as e:
@@ -117,8 +118,23 @@ def process_video(request):
         # Reset status
         PROCESSING_STATUS = {"status": "starting", "csv_file": None}
 
+        # Get the optional output directory
+        output_directory = request.POST.get('output_directory', '')
+
+        # Validate the output directory
+        if output_directory and not os.path.isdir(output_directory):
+            try:
+                # Try to create the directory if it doesn't exist
+                os.makedirs(output_directory, exist_ok=True)
+            except Exception as e:
+                return JsonResponse({'error': f'Invalid output directory: {str(e)}'}, status=400)
+
+        # Use output directory or default temp location
+        temp_dir = output_directory if output_directory else os.path.join(BASE_DIR, 'temp_uploads')
+        os.makedirs(temp_dir, exist_ok=True)
+
         # Save the uploaded file temporarily
-        temp_video_path = os.path.join(BASE_DIR, 'temp_upload_' + uploaded_file.name)
+        temp_video_path = os.path.join(temp_dir, 'temp_upload_' + uploaded_file.name)
         with open(temp_video_path, 'wb') as f:
             for chunk in uploaded_file.chunks():
                 f.write(chunk)
@@ -127,7 +143,7 @@ def process_video(request):
             # Start the processing in a separate process
             PROCESS = multiprocessing.Process(
                 target=run_dlc_and_track_status,
-                args=(temp_video_path,)
+                args=(temp_video_path, output_directory)
             )
             PROCESS.start()
         except Exception as e:

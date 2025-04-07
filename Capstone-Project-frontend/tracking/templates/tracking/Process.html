@@ -23,12 +23,15 @@
                     <option value="deeplabcut">Deeplabcut (Active)</option>
                     <option value="roboflow">Roboflow (Inactive)</option>
                 </select>
+                <!-- New: Output directory selection -->
+                <br>
+                <label for="outputDirectory">Output Directory:</label>
+                <input type="text" id="outputDirectory" name="output_directory" placeholder="Enter path or use default">
+                <button type="button" onclick="selectDirectory()" id="selectDirBtn">Browse...</button>
             </form>
             <!-- Action buttons -->
             <button type="button" onclick="processVideos()" id="processBtn">Process</button>
             <button type="button" onclick="stopProcess()" id="stopBtn">Stop process</button>
-            <!-- Download button hidden by default -->
-            <button type="button" onclick="downloadVideos()" id="downloadBtn" style="display: none;">Download</button>
 
             <!-- Processing status indicator -->
             <div id="processingStatus" style="margin-top: 10px; display: none;">
@@ -37,10 +40,21 @@
                     <div id="progressIndicator" style="width: 0%; height: 100%; background-color: #4CAF50; transition: width 0.3s;"></div>
                 </div>
             </div>
+
+            <!-- Output file location display -->
+            <div id="outputInfo" style="margin-top: 10px; display: none;">
+                <p>Output saved to: <span id="outputLocation"></span></p>
+            </div>
         </div>
     </div>
 
     <script>
+        function selectDirectory() {
+            // Here we're just setting a sample path
+            const defaultPath = "C:\\Users\\Username\\Documents\\RodentTracking";
+            document.getElementById("outputDirectory").value = defaultPath;
+        }
+
         // Function to process the uploaded video
         function processVideos() {
             var fileInput = document.getElementById("videoUpload");
@@ -61,11 +75,11 @@
             document.getElementById("statusMessage").textContent = "Processing video... please wait";
             document.getElementById("progressIndicator").style.width = "10%";
 
+            // Hide output info while processing
+            document.getElementById("outputInfo").style.display = "none";
+
             // Disable process button during processing
             document.getElementById("processBtn").disabled = true;
-
-            // Hide download button while processing
-            document.getElementById("downloadBtn").style.display = "none";
 
             // Create a FormData object from the upload form
             var formData = new FormData(document.getElementById("uploadForm"));
@@ -87,7 +101,7 @@
                         // Start checking processing status
                         checkProcessingStatus();
                     } else if (data.status === "Processing complete") {
-                        // Show download button immediately if processing was instant
+                        // Show output location immediately if processing was instant
                         processingComplete(data.csv_file);
                     }
                 }
@@ -137,14 +151,12 @@
         // Function to handle when processing is complete
         function processingComplete(csvFile) {
             // Update status
-            document.getElementById("statusMessage").textContent = "Processing complete! Ready for download.";
+            document.getElementById("statusMessage").textContent = "Processing complete!";
             document.getElementById("progressIndicator").style.width = "100%";
 
-            // Store the CSV file path globally for download
-            window.csvFilePath = csvFile;
-
-            // Show download button
-            document.getElementById("downloadBtn").style.display = "inline-block";
+            // Display output location
+            document.getElementById("outputInfo").style.display = "block";
+            document.getElementById("outputLocation").textContent = csvFile;
         }
 
         // Function to stop the processing
@@ -163,25 +175,14 @@
                 } else {
                     document.getElementById("statusMessage").textContent = "Process stopped: " + data.status;
                     document.getElementById("progressIndicator").style.width = "0%";
-                    // Hide download button when process is stopped
-                    document.getElementById("downloadBtn").style.display = "none";
+                    // Hide output info when process is stopped
+                    document.getElementById("outputInfo").style.display = "none";
                 }
             })
             .catch(error => {
                 console.error("Error during stop process:", error);
                 document.getElementById("statusMessage").textContent = "An error occurred while stopping the process.";
             });
-        }
-
-        // Updated download function to download CSV data
-        function downloadVideos() {
-            // If we have a specific file path, use it
-            if (window.csvFilePath) {
-                window.location.href = "{% url 'download_csv' %}?file=" + encodeURIComponent(window.csvFilePath);
-            } else {
-                // Fall back to the general download endpoint
-                window.location.href = "{% url 'download_csv' %}";
-            }
         }
     </script>
 </body>
