@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-y+7ki^xngo$zy)sbl$-h(mp9(higaz#6%k_rkxbj$rdb=-dbzw
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['3.149.236.237', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['3.149.236.237', 'localhost', '127.0.0.1', '.ngrok-free.app']
 
 
 # Application definition
@@ -97,6 +97,8 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 
 USE_TZ = True
+
+TIMEOUT = 600  # 10 minutes
 
 
 # Static files (CSS, JavaScript, Images)

@@ -7,7 +7,9 @@ import shutil
 from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse, FileResponse, Http404
 from django.views.decorators.csrf import csrf_exempt
-from .run_visualization import run_visualization
+from tracking.run_vis import run_visualization_to_client
+
+
 
 # Set BASE_DIR and update sys.path to import backend modules outside the frontend folder
 BASE_DIR = pathlib.Path(__file__).resolve().parent.parent
@@ -262,7 +264,7 @@ def visualize_csv(request):
 
     return JsonResponse({'error': 'Invalid request method'}, status=400)
 
-
+@csrf_exempt
 def serve_visualization(request, temp_dir, filename):
     """Serve the visualization HTML file"""
     file_path = os.path.join(tempfile.gettempdir(), temp_dir, filename)
@@ -272,11 +274,15 @@ def serve_visualization(request, temp_dir, filename):
         return HttpResponse(content, content_type='text/html')
     raise Http404("Visualization not found")
 
-
+@csrf_exempt
 def run_visualize(request):
+    """
+    Modified view that creates an MP4 video from the visualization frames and returns it.
+    """
     if request.method == 'POST':
         try:
-            # Get form parameters
+            # Retrieve parameters from the POST data.
+            # Here we assume simple form fields; adjust keys to match your form.
             trail_length = int(request.POST.get('trail_length', 10))
             show_trails = request.POST.get('show_trails') == 'on'
             show_trajectory = request.POST.get('show_trajectory') == 'on'
@@ -287,65 +293,70 @@ def run_visualize(request):
             show_labels = request.POST.get('showLabels') == 'on'
             show_legend = request.POST.get('showLegend') == 'on'
 
-            # Handle uploaded files
-            video_file = request.FILES.get('videos')  # Get single file
-            csv_file = request.FILES.get('csv_files')  # Get single file
+            # Handle the CSV file (and optionally video) uploads.
+            csv_file = request.FILES.get('csv_files')
+            video_file = request.FILES.get('videos')  # Optional
 
             if not csv_file:
                 return JsonResponse({'status': 'error', 'message': 'No CSV file provided'})
 
-            # Save uploaded files temporarily
-            temp_video_path = None
-            temp_csv_path = None
+            # Save uploaded CSV file to a temporary location.
+            fd, temp_csv_path = tempfile.mkstemp(suffix='.csv')
+            with os.fdopen(fd, 'wb') as f:
+                for chunk in csv_file.chunks():
+                    f.write(chunk)
 
-            try:
-                # Save CSV file
-                fd, temp_csv_path = tempfile.mkstemp(suffix='.csv')
-                with os.fdopen(fd, 'wb') as f:
-                    for chunk in csv_file.chunks():
+            temp_video_path = None
+            if video_file:
+                fd_vid, temp_video_path = tempfile.mkstemp(suffix='.mp4')
+                with os.fdopen(fd_vid, 'wb') as f:
+                    for chunk in video_file.chunks():
                         f.write(chunk)
 
-                # Save video file if provided
-                if video_file:
-                    fd, temp_video_path = tempfile.mkstemp(suffix='.mp4')
-                    with os.fdopen(fd, 'wb') as f:
-                        for chunk in video_file.chunks():
-                            f.write(chunk)
+            # Define the output video file path.
+            temp_dir = os.path.join(BASE_DIR, 'temp_visualizations')
+            os.makedirs(temp_dir, exist_ok=True)
+            output_video = os.path.join(temp_dir, f'visualization_{int(time.time())}.mp4')
 
-                # Call the visualization function with all parameters
-                result = run_visualization(
-                    csv_path=temp_csv_path,
-                    video_path=temp_video_path,
-                    trail_length=trail_length,
-                    show_trails=show_trails,
-                    show_trajectory=show_trajectory,
-                    trajectory_opacity=trajectory_opacity,
-                    show_connections=show_connections,
-                    show_segmentation=show_segmentation,
-                    segmentation_opacity=segmentation_opacity,
-                    show_labels=show_labels,
-                    show_legend=show_legend
-                )
+            # Create an instance of your visualizer.
+            from tracking.visualization import RodentVisualizerCV
+            visualizer = RodentVisualizerCV(
+                csv_path=temp_csv_path,
+                video_path=video_file,
+                trail_length=trail_length,
+                show_trails=show_trails,
+                show_trajectory=show_trajectory,
+                trajectory_opacity=trajectory_opacity,
+                show_connections=show_connections,
+                show_segmentation=show_segmentation,
+                segmentation_opacity=segmentation_opacity,
+                show_labels=show_labels,
+                show_legend=show_legend
+            )
 
-                return JsonResponse({'status': 'success', 'result': result})
+            # Write the animation to an MP4 using the new method.
+            visualizer.write_animation_to_video(output_video, fps=30)
 
+            # Clean up temporary CSV and video files.
+            try:
+                os.remove(temp_csv_path)
+                if temp_video_path:
+                    os.remove(temp_video_path)
             except Exception as e:
-                return JsonResponse({'status': 'error', 'message': str(e)})
-            finally:
-                # Clean up temporary files
-                if temp_csv_path and os.path.exists(temp_csv_path):
-                    try:
-                        os.remove(temp_csv_path)
-                    except:
-                        pass
-                if temp_video_path and os.path.exists(temp_video_path):
-                    try:
-                        os.remove(temp_video_path)
-                    except:
-                        pass
+                print("Cleanup error:", e)
+
+            # Return the video file to the client.
+            #return FileResponse(open(output_video, 'rb'), content_type='video/mp4')
+            # After generating and closing the video file, use the following:
+            response = FileResponse(
+                open(output_video, 'rb'),
+                content_type='video/mp4',
+                as_attachment=True,
+                filename=os.path.basename(output_video)
+            )
+            return response
 
         except Exception as e:
-            return JsonResponse({'status': 'error', 'message': f'Error processing request: {str(e)}'})
-
-    # If not POST, render the visualization form
-    return render(request, 'tracking/visualize.html')
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+    else:
+        return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=400)

@@ -1,26 +1,7 @@
 import pandas as pd
 import numpy as np
 import cv2
-
-
-def normalize_coords(self, x, y):
-    """
-    Normalizes the coordinates so that they lie in the range of the popup window.
-    Parameters:
-        self (object):  The object the coordinates belong to.
-        x (point): The x coordinate.
-        y (point): The y coordinate.
-    """
-    # Convert data coordinates to pixel coordinates with bounds checking
-    norm_x = int((x - self.min_x) / (self.max_x - self.min_x) * (self.width - 40) + 20)
-    norm_y = int((y - self.min_y) / (self.max_y - self.min_y) * (self.height - 40) + 20)
-
-    # Ensure within bounds
-    norm_x = max(0, min(norm_x, self.width - 1))
-    norm_y = max(0, min(norm_y, self.height - 1))
-
-    return norm_x, norm_y
-
+import time
 
 
 class RodentVisualizerCV:
@@ -158,6 +139,25 @@ class RodentVisualizerCV:
             else:
                 print(f"Warning: Could not open video file {self.video_path}")
 
+    def normalize_coords(self, x, y):
+        """
+        Normalizes the coordinates so that they lie in the range of the popup window.
+        Parameters:
+            self (object):  The object the coordinates belong to.
+            x (point): The x coordinate.
+            y (point): The y coordinate.
+        """
+        # Convert data coordinates to pixel coordinates with bounds checking
+        norm_x = int((x - self.min_x) / (self.max_x - self.min_x) * (self.width - 40) + 20)
+        norm_y = int((y - self.min_y) / (self.max_y - self.min_y) * (self.height - 40) + 20)
+
+        # Ensure within bounds
+        norm_x = max(0, min(norm_x, self.width - 1))
+        norm_y = max(0, min(norm_y, self.height - 1))
+
+        return norm_x, norm_y
+
+
     @staticmethod
     def _draw_t_maze(canvas):
         """draws the T-Maze in canvas"""
@@ -263,7 +263,7 @@ class RodentVisualizerCV:
                 if len(x) > 0 and len(y) > 0 and not pd.isna(x[0]) and not pd.isna(y[0]):
                     # Normalize coordinates
                     if not self.video_path:
-                        px, py = normalize_coords(self, x[0], y[0])
+                        px, py = self.normalize_coords(self, x[0], y[0])
                     else:
                         px, py = int(x[0]), int(y[0])
 
@@ -410,6 +410,168 @@ class RodentVisualizerCV:
         print("Animation complete, press any key to close")
         cv2.waitKey(0)
         cv2.destroyAllWindows()
+
+    def write_animation_to_video(self, output_file, fps=30):
+        """
+        Writes the full visualization (with dots, segmentation, trails, etc.)
+        to an MP4 video file instead of displaying it live.
+        """
+        # If using a video input, reset to beginning.
+        if self.video_path:
+            self.video_capture.set(cv2.CAP_PROP_POS_FRAMES, 0)
+            self.width = int(self.video_capture.get(cv2.CAP_PROP_FRAME_WIDTH))
+            self.height = int(self.video_capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
+            self.video_fps = self.video_capture.get(cv2.CAP_PROP_FPS)
+            self.video_frame_count = int(self.video_capture.get(cv2.CAP_PROP_FRAME_COUNT))
+
+        # Initialize VideoWriter for MP4 output.
+        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+        out = cv2.VideoWriter(output_file, fourcc, fps, (self.width, self.height))
+
+        # Loop over each frame (same iteration as in display_animation)
+        for frame_idx, frame_id in enumerate(sorted(self.frame_ids)):
+            # Get data for the current frame.
+            frame_data = self.data[self.data[self.frame_column] == frame_id]
+            print(f"Processing frame {frame_idx + 1}/{self.frames}: {frame_id}, Data rows: {len(frame_data)}")
+
+            # Create canvas: either from video (if available) or blank.
+            if self.video_path:
+                ret, video_frame = self.video_capture.read()
+                if not ret:
+                    print("Warning: End of video reached before processing all frames.")
+                    canvas = np.ones((self.height, self.width, 3), dtype=np.uint8) * 255
+                else:
+                    # Resize if necessary.
+                    if video_frame.shape[1] != self.width or video_frame.shape[0] != self.height:
+                        canvas = cv2.resize(video_frame, (self.width, self.height))
+                    else:
+                        canvas = video_frame.copy()
+            else:
+                canvas = np.ones((self.height, self.width, 3), dtype=np.uint8) * 255
+                # Draw coordinate grid.
+                for grid_i in range(0, self.width, 100):
+                    cv2.line(canvas, (grid_i, 0), (grid_i, self.height), (240, 240, 240), 1)
+                for grid_i in range(0, self.height, 100):
+                    cv2.line(canvas, (0, grid_i), (self.width, grid_i), (240, 240, 240), 1)
+                # Draw T-Maze at the center.
+                self._draw_t_maze(canvas)
+
+            # --- Replicate the drawing of overlays from display_animation ---
+            positions = {}
+            # Calculate positions for each body part.
+            for part in self.body_parts:
+                cols = self.body_part_columns[part]
+                x_col = cols["_x"]
+                y_col = cols["_y"]
+                x = frame_data[x_col].values
+                y = frame_data[y_col].values
+                if len(x) > 0 and len(y) > 0 and not (pd.isna(x[0]) or pd.isna(y[0])):
+                    if not self.video_path:
+                        px, py = self.normalize_coords(x[0], y[0])
+                    else:
+                        px, py = int(x[0]), int(y[0])
+                    positions[part] = (px, py)
+                    # Update trails.
+                    self.trails[part].append((px, py))
+                    if self.trail_length is not None and len(self.trails[part]) > self.trail_length:
+                        self.trails[part].pop(0)
+
+            # Draw segmentation (if enabled).
+            if self.show_segmentation:
+                overlay = canvas.copy()
+                if all(part in positions for part in ['left_body', 'body_center', 'right_body', 'tail_base']):
+                    if all(part in positions for part in ['left_ear', 'right_ear']):
+                        body_polygon = np.array([
+                            positions['left_body'],
+                            positions['left_ear'],
+                            positions['right_ear'],
+                            positions['right_body'],
+                            positions['tail_base']
+                        ], np.int32)
+                        cv2.fillPoly(overlay, [body_polygon], self.segmentation_colors.get('body', (200, 255, 255)))
+                if all(part in positions for part in ['left_ear', 'nose', 'right_ear']):
+                    ear_triangle = np.array([
+                        positions['left_ear'],
+                        positions['nose'],
+                        positions['right_ear']
+                    ], np.int32)
+                    cv2.fillPoly(overlay, [ear_triangle], self.segmentation_colors.get('ear', (200, 200, 255)))
+                cv2.addWeighted(overlay, self.segmentation_opacity, canvas, 1 - self.segmentation_opacity, 0, canvas)
+
+            # Draw connections (if enabled).
+            if self.show_connections:
+                if all(part in positions for part in ['nose', 'body_center', 'tail_base']):
+                    cv2.line(canvas, positions['nose'], positions['body_center'], (100, 100, 100), 2)
+                    cv2.line(canvas, positions['body_center'], positions['tail_base'], (100, 100, 100), 2)
+                if all(part in positions for part in ['left_ear', 'nose', 'right_ear']):
+                    cv2.line(canvas, positions['left_ear'], positions['nose'], (100, 100, 100), 2)
+                    cv2.line(canvas, positions['nose'], positions['right_ear'], (100, 100, 100), 2)
+                    cv2.line(canvas, positions['left_ear'], positions['right_ear'], (100, 100, 100), 2)
+                if all(part in positions for part in ['left_body', 'body_center', 'right_body']):
+                    cv2.line(canvas, positions['left_body'], positions['body_center'], (100, 100, 100), 2)
+                    cv2.line(canvas, positions['body_center'], positions['right_body'], (100, 100, 100), 2)
+                if all(part in positions for part in ['left_body', 'right_body', 'left_ear', 'right_ear']):
+                    cv2.line(canvas, positions['left_body'], positions['left_ear'], (100, 100, 100), 2)
+                    cv2.line(canvas, positions['right_body'], positions['right_ear'], (100, 100, 100), 2)
+                if all(part in positions for part in ['left_body', 'right_body', 'tail_base']):
+                    cv2.line(canvas, positions['left_body'], positions['tail_base'], (100, 100, 100), 2)
+                    cv2.line(canvas, positions['right_body'], positions['tail_base'], (100, 100, 100), 2)
+
+            # Draw trails, current positions and labels.
+            for part in self.body_parts:
+                if part in positions:
+                    px, py = positions[part]
+                    # Draw trails (if enabled)
+                    if self.show_trails:
+                        for trail_i in range(1, len(self.trails[part])):
+                            if self.trail_length is not None:
+                                alpha = 0.3 + 0.7 * trail_i / len(self.trails[part])
+                            else:
+                                distance_from_current = len(self.trails[part]) - trail_i
+                                alpha = max(0.1, 1.0 - (distance_from_current / 50.0))
+                            color = self.colors.get(part, (0, 0, 255))
+                            scaled_color = tuple(int(c * alpha) for c in color)
+                            cv2.line(canvas, self.trails[part][trail_i - 1], self.trails[part][trail_i], scaled_color,
+                                     2)
+                    # Draw trajectory (if enabled)
+                    if self.show_trajectory and all(p in positions for p in ['body_center', 'left_body', 'right_body']):
+                        centroid_x = int(
+                            (positions['body_center'][0] + positions['left_body'][0] + positions['right_body'][0]) / 3)
+                        centroid_y = int(
+                            (positions['body_center'][1] + positions['left_body'][1] + positions['right_body'][1]) / 3)
+                        centroid_position = (centroid_x, centroid_y)
+                        self.body_centroid_trajectory.append(centroid_position)
+                        if len(self.body_centroid_trajectory) > 1:
+                            trajectory_points = np.array(self.body_centroid_trajectory, dtype=np.int32)
+                            cv2.polylines(canvas, [trajectory_points], False, (0, 255, 0), 2)
+                    # Draw a circle for the current position.
+                    cv2.circle(canvas, (px, py), 3, self.colors.get(part, (0, 0, 255)), -1)
+                    if self.show_labels:
+                        cv2.putText(canvas, part, (px + 10, py), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
+                                    self.colors.get(part, (0, 0, 255)), 1)
+
+            # Add a frame counter overlay.
+            cv2.putText(canvas, f"Frame: {frame_idx + 1}/{self.frames}", (20, 30),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 0), 2)
+
+            # Optionally, add legend overlays here if show_legend is True.
+            if self.show_legend:
+                legend_y = 60
+                for part in self.body_parts:
+                    cv2.circle(canvas, (30, legend_y), 6, self.colors.get(part, (0, 0, 255)), -1)
+                    cv2.putText(canvas, part, (45, legend_y + 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
+                    legend_y += 25
+
+            # Finally, write the fully drawn frame to the video.
+            out.write(canvas)
+
+            # (Optional) Sleep to simulate frame delay if needed.
+            time.sleep(1 / fps)
+
+        out.release()
+        print(f"Video saved to: {output_file}")
+
+
 
 
 # Example usage

@@ -13,6 +13,8 @@ sys.path.append(str(BASE_DIR))
 from tracking import visualization
 
 
+
+
 def write_status(status):
     """Write status to a temporary file that Django can read"""
     status_file = os.path.join(BASE_DIR, 'temp_visualizations', 'vis_status.json')

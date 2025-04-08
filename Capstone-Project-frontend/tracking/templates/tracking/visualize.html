@@ -134,16 +134,38 @@
 
             const formData = new FormData(this);
 
+            // Replace your fetch code with this:
             fetch(this.action, {
                 method: 'POST',
                 body: formData
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'error') {
-                    showStatus('Error: ' + data.message, 'error');
+            .then(response => {
+                // Check if the response is JSON or a file
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    // It's JSON (probably an error)
+                    return response.json().then(data => {
+                        showStatus('Error: ' + data.message, 'error');
+                    });
                 } else {
-                    showStatus('Ended Visualization', 'info');
+                    // It's a file - trigger download
+                    return response.blob().then(blob => {
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.style.display = 'none';
+                        a.href = url;
+                        // Get filename from content-disposition header if available
+                        const disposition = response.headers.get('content-disposition');
+                        let filename = 'visualization.mp4';
+                        if (disposition && disposition.indexOf('filename') !== -1) {
+                            filename = disposition.split('filename=')[1].replace(/["']/g, '');
+                        }
+                        a.download = filename;
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                        showStatus('Visualization downloaded successfully', 'success');
+                    });
                 }
             })
             .catch(error => {
