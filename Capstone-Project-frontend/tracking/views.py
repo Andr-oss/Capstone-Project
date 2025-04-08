@@ -322,7 +322,7 @@ def run_visualize(request):
             from tracking.visualization import RodentVisualizerCV
             visualizer = RodentVisualizerCV(
                 csv_path=temp_csv_path,
-                video_path=video_file,
+                video_path=temp_video_path,
                 trail_length=trail_length,
                 show_trails=show_trails,
                 show_trajectory=show_trajectory,

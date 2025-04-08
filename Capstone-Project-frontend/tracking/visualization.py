@@ -263,7 +263,7 @@ class RodentVisualizerCV:
                 if len(x) > 0 and len(y) > 0 and not pd.isna(x[0]) and not pd.isna(y[0]):
                     # Normalize coordinates
                     if not self.video_path:
-                        px, py = self.normalize_coords(self, x[0], y[0])
+                        px, py = self.normalize_coords(x[0], y[0])
                     else:
                         px, py = int(x[0]), int(y[0])
 
