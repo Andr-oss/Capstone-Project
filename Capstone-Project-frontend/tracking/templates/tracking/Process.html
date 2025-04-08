@@ -12,7 +12,8 @@
         <h1>New Videos</h1>
         <div>
             <!-- Form for video upload -->
-            <form id="uploadForm" method="post" enctype="multipart/form-data">
+            <form id="uploadForm" method="post" enctype="multipart/form-data"
+                  action="{% url 'process_video' %}" target="_blank">
                 {% csrf_token %}
                 <!-- File input to select multiple videos (visible for demo purposes) -->
                 <input type="file" id="videoUpload" name="videos" multiple accept="video/*">
@@ -33,14 +34,6 @@
             <button type="button" onclick="processVideos()" id="processBtn">Process</button>
             <button type="button" onclick="stopProcess()" id="stopBtn">Stop process</button>
 
-            <!-- Processing status indicator -->
-            <div id="processingStatus" style="margin-top: 10px; display: none;">
-                <p id="statusMessage">Processing video... please wait</p>
-                <div class="progress-bar" style="width: 100%; height: 20px; background-color: #f0f0f0; border-radius: 10px; overflow: hidden;">
-                    <div id="progressIndicator" style="width: 0%; height: 100%; background-color: #4CAF50; transition: width 0.3s;"></div>
-                </div>
-            </div>
-
             <!-- Output file location display -->
             <div id="outputInfo" style="margin-top: 10px; display: none;">
                 <p>Output saved to: <span id="outputLocation"></span></p>
@@ -55,67 +48,33 @@
             document.getElementById("outputDirectory").value = defaultPath;
         }
 
-        // Function to process the uploaded video
-        function processVideos() {
-            var fileInput = document.getElementById("videoUpload");
-            if (fileInput.files.length === 0) {
-                alert("Please select a video file to process.");
-                return;
-            }
-
-            // Check if the file type is a video
-            var videoFile = fileInput.files[0];
-            if (!videoFile.type.startsWith("video/")) {
-                alert("Selected file is not a video.");
-                return;
-            }
-
-            // Show processing status
-            document.getElementById("processingStatus").style.display = "block";
-            document.getElementById("statusMessage").textContent = "Processing video... please wait";
-            document.getElementById("progressIndicator").style.width = "10%";
-
-            // Hide output info while processing
-            document.getElementById("outputInfo").style.display = "none";
-
-            // Disable process button during processing
-            document.getElementById("processBtn").disabled = true;
-
-            // Create a FormData object from the upload form
-            var formData = new FormData(document.getElementById("uploadForm"));
-
-            // Send AJAX POST request to the process_video endpoint
-            fetch("{% url 'process_video' %}", {
-                method: "POST",
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    document.getElementById("statusMessage").textContent = "Error: " + data.error;
-                    document.getElementById("progressIndicator").style.width = "0%";
-                    document.getElementById("progressIndicator").style.backgroundColor = "#f44336";
-                } else {
-                    // Check if processing is complete
-                    if (data.status === "Processing started") {
-                        // Start checking processing status
-                        checkProcessingStatus();
-                    } else if (data.status === "Processing complete") {
-                        // Show output location immediately if processing was instant
-                        processingComplete(data.csv_file);
-                    }
-                }
-                // Re-enable process button
-                document.getElementById("processBtn").disabled = false;
-            })
-            .catch(error => {
-                console.error("Error during processing:", error);
-                document.getElementById("statusMessage").textContent = "An error occurred during processing.";
-                document.getElementById("progressIndicator").style.width = "0%";
-                document.getElementById("progressIndicator").style.backgroundColor = "#f44336";
-                document.getElementById("processBtn").disabled = false;
-            });
+    function processVideos() {
+        var fileInput = document.getElementById("videoUpload");
+        if (fileInput.files.length === 0) {
+            alert("Please select a video file to process.");
+            return;
         }
+
+        // Optional: Basic file-type check
+        var videoFile = fileInput.files[0];
+        if (!videoFile.type.startsWith("video/")) {
+            alert("Selected file is not a video.");
+            return;
+        }
+
+        // Show a simple "Processing..." message
+        document.getElementById("processingStatus").style.display = "block";
+        document.getElementById("statusMessage").textContent = "Processing video... please wait";
+
+        // Disable the process button so it can’t be clicked repeatedly
+        document.getElementById("processBtn").disabled = true;
+
+        // Submit the form to trigger the file download
+        const form = document.getElementById("uploadForm");
+        form.action = "{% url 'process_video' %}";
+        form.method = "POST";
+        form.submit();
+    }
 
         // Function to check processing status periodically
         function checkProcessingStatus() {

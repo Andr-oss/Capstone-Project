@@ -3,6 +3,7 @@ import sys, pathlib, os, multiprocessing, time, subprocess
 import tempfile
 import json
 import shutil
+import os
 
 from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse, FileResponse, Http404
@@ -108,53 +109,53 @@ def run_dlc_and_track_status(video_path, output_directory=None):
 @csrf_exempt
 def process_video(request):
     """
-    Handles the uploaded video, starts the run_dlc_pipeline function in a background process,
-    and returns a JSON response indicating that processing has started.
+    Handles the uploaded video synchronously, processes it, and immediately
+    returns the resulting CSV file as a download response.
     """
-    global PROCESS, PROCESSING_STATUS
     if request.method == 'POST':
         uploaded_file = request.FILES.get('videos')
         if not uploaded_file:
-            return JsonResponse({'error': 'No video file found'}, status=400)
+            return HttpResponse("No video file found.", status=400)
 
-        # Reset status
-        PROCESSING_STATUS = {"status": "starting", "csv_file": None}
-
-        # Get the optional output directory
+        # Get the optional output directory from form
         output_directory = request.POST.get('output_directory', '')
 
-        # Validate the output directory
-        if output_directory and not os.path.isdir(output_directory):
-            try:
-                # Try to create the directory if it doesn't exist
-                os.makedirs(output_directory, exist_ok=True)
-            except Exception as e:
-                return JsonResponse({'error': f'Invalid output directory: {str(e)}'}, status=400)
+        # Validate/create the output directory if provided
+        if output_directory:
+            if not os.path.isdir(output_directory):
+                try:
+                    os.makedirs(output_directory, exist_ok=True)
+                except Exception as e:
+                    return HttpResponse(f"Invalid output directory: {str(e)}", status=400)
+        else:
+            # Use a default temp directory if none is given
+            output_directory = os.path.join(BASE_DIR, 'temp_uploads')
+            os.makedirs(output_directory, exist_ok=True)
 
-        # Use output directory or default temp location
-        temp_dir = output_directory if output_directory else os.path.join(BASE_DIR, 'temp_uploads')
-        os.makedirs(temp_dir, exist_ok=True)
-
-        # Save the uploaded file temporarily
-        temp_video_path = os.path.join(temp_dir, 'temp_upload_' + uploaded_file.name)
+        # Save the uploaded file
+        temp_video_path = os.path.join(output_directory, 'temp_upload_' + uploaded_file.name)
         with open(temp_video_path, 'wb') as f:
             for chunk in uploaded_file.chunks():
                 f.write(chunk)
 
-        try:
-            # Start the processing in a separate process
-            PROCESS = multiprocessing.Process(
-                target=run_dlc_and_track_status,
-                args=(temp_video_path, output_directory)
-            )
-            PROCESS.start()
-        except Exception as e:
-            PROCESSING_STATUS = {"status": "error", "message": str(e)}
-            return JsonResponse({'error': str(e)}, status=500)
+        # --- Run your DLC processing function here (synchronously) ---
+        # For example:
+        # csv_file_path = run_dlc_pipeline(temp_video_path, output_directory)
 
-        return JsonResponse({'status': 'Processing started'})
-    else:
-        return JsonResponse({'error': 'Invalid request method'}, status=400)
+        # TODO: Replace the next line with your actual pipeline call:
+        csv_file_path = os.path.join(output_directory, 'output.csv')
+
+        # Ensure the CSV actually exists or handle errors
+        if not os.path.exists(csv_file_path):
+            return HttpResponse("Error: CSV file not found after processing.", status=500)
+
+        # Return CSV directly as a download
+        response = FileResponse(open(csv_file_path, 'rb'), as_attachment=True, filename="results.csv")
+        return response
+
+    # If it's not POST, return a simple error response
+    return HttpResponse("Invalid request method.", status=400)
+
 
 
 @csrf_exempt
