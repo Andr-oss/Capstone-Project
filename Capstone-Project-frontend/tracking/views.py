@@ -3,6 +3,9 @@ import sys, pathlib, os, multiprocessing, time, subprocess
 import tempfile
 import json
 import shutil
+import deeplabcut
+from pathlib import Path
+import glob
 import os
 
 from django.shortcuts import render
@@ -108,53 +111,73 @@ def run_dlc_and_track_status(video_path, output_directory=None):
 
 @csrf_exempt
 def process_video(request):
-    """
-    Handles the uploaded video synchronously, processes it, and immediately
-    returns the resulting CSV file as a download response.
-    """
     if request.method == 'POST':
-        uploaded_file = request.FILES.get('videos')
-        if not uploaded_file:
-            return HttpResponse("No video file found.", status=400)
+        # Check if any videos were uploaded
+        if 'videos' not in request.FILES:
+            return HttpResponse("No videos uploaded", status=400)
 
-        # Get the optional output directory from form
-        output_directory = request.POST.get('output_directory', '')
+        uploaded_files = request.FILES.getlist('videos')
+        if not uploaded_files:
+            return HttpResponse("No videos selected", status=400)
 
-        # Validate/create the output directory if provided
-        if output_directory:
-            if not os.path.isdir(output_directory):
-                try:
-                    os.makedirs(output_directory, exist_ok=True)
-                except Exception as e:
-                    return HttpResponse(f"Invalid output directory: {str(e)}", status=400)
+        # Get the model option
+        model_option = request.POST.get('model_option', 'deeplabcut')
+
+        # Only proceed with DeepLabCut model
+        if model_option == 'deeplabcut':
+            try:
+                # Create a temporary directory for processing
+                with tempfile.TemporaryDirectory() as temp_dir:
+                    # Process the first video (for simplicity)
+                    video_file = uploaded_files[0]
+
+                    # Save the uploaded video to the temp directory
+                    video_path = os.path.join(temp_dir, video_file.name)
+                    with open(video_path, 'wb+') as destination:
+                        for chunk in video_file.chunks():
+                            destination.write(chunk)
+
+                    # Run DeepLabCut analysis
+                    config_path = r"C:\Users\Bazil\Downloads\AndrewFirstTraining-Andrew-2025-03-08\config.yaml"
+                    deeplabcut.analyze_videos(
+                        config=config_path,
+                        videos=[video_path],
+                        save_as_csv=True,
+                        destfolder=temp_dir,
+                        auto_track=False
+                    )
+
+                    # Find the generated CSV
+                    video_basename = Path(video_file.name).stem
+                    csv_files = sorted(glob.glob(os.path.join(temp_dir, f"*{video_basename}*DLC*.csv")),
+                                       key=os.path.getmtime, reverse=True)
+
+                    if not csv_files:
+                        # Try looking for any DLC csv
+                        csv_files = sorted(glob.glob(os.path.join(temp_dir, "*DLC*.csv")),
+                                           key=os.path.getmtime, reverse=True)
+
+                    if not csv_files:
+                        return HttpResponse("No output CSV generated", status=500)
+
+                    latest_csv = csv_files[0]
+
+                    # Read the CSV content
+                    with open(latest_csv, 'rb') as f:
+                        csv_content = f.read()
+
+                    # Return the CSV content as a downloadable file
+                    response = HttpResponse(csv_content, content_type='text/csv')
+                    response['Content-Disposition'] = f'attachment; filename="{os.path.basename(latest_csv)}"'
+                    return response
+
+            except Exception as e:
+                return HttpResponse(f"Error during processing: {str(e)}", status=500)
         else:
-            # Use a default temp directory if none is given
-            output_directory = os.path.join(BASE_DIR, 'temp_uploads')
-            os.makedirs(output_directory, exist_ok=True)
+            return HttpResponse("Selected model option is not available", status=400)
 
-        # Save the uploaded file
-        temp_video_path = os.path.join(output_directory, 'temp_upload_' + uploaded_file.name)
-        with open(temp_video_path, 'wb') as f:
-            for chunk in uploaded_file.chunks():
-                f.write(chunk)
-
-        # --- Run your DLC processing function here (synchronously) ---
-        # For example:
-        # csv_file_path = run_dlc_pipeline(temp_video_path, output_directory)
-
-        # TODO: Replace the next line with your actual pipeline call:
-        csv_file_path = os.path.join(output_directory, 'output.csv')
-
-        # Ensure the CSV actually exists or handle errors
-        if not os.path.exists(csv_file_path):
-            return HttpResponse("Error: CSV file not found after processing.", status=500)
-
-        # Return CSV directly as a download
-        response = FileResponse(open(csv_file_path, 'rb'), as_attachment=True, filename="results.csv")
-        return response
-
-    # If it's not POST, return a simple error response
-    return HttpResponse("Invalid request method.", status=400)
+    # If not a POST request
+    return HttpResponse("Invalid request method", status=405)
 
 
 
