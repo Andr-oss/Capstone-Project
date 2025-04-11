@@ -37,11 +37,8 @@
     </div>
 
     <script>
-        function selectDirectory() {
-            // Here we're just setting a sample path
-            const defaultPath = "C:\\Users\\Username\\Documents\\RodentTracking";
-            document.getElementById("outputDirectory").value = defaultPath;
-        }
+        // Store the current task ID
+        let currentTaskId = null;
 
         function processVideos() {
             var fileInput = document.getElementById("videoUpload");
@@ -50,130 +47,68 @@
                 return;
             }
 
-            // Show processing status
-            document.getElementById("statusMessage").textContent = "Processing video... please wait";
-
-            // Disable the process button
-            document.getElementById("processBtn").disabled = true;
-
             // Create a FormData object
             var formData = new FormData(document.getElementById("uploadForm"));
 
-            // Send the AJAX request
+            // Send the request to start processing
             fetch("{% url 'process_video' %}", {
                 method: "POST",
                 body: formData,
             })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'started') {
+                    // Store the task ID
+                    currentTaskId = data.task_id;
+                    document.getElementById("statusMessage").textContent = "Processing started...";
+
+                    // Start polling for status
+                    pollTaskStatus();
+                } else {
+                    throw new Error(data.message || 'Failed to start processing');
                 }
-
-                // Get filename from Content-Disposition header if available
-                const disposition = response.headers.get('Content-Disposition');
-                let filename = 'output.csv';
-                if (disposition && disposition.indexOf('attachment') !== -1) {
-                    const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
-                    const matches = filenameRegex.exec(disposition);
-                    if (matches != null && matches[1]) {
-                        filename = matches[1].replace(/['"]/g, '');
-                    }
-                }
-
-                // Convert response to blob for downloading
-                return response.blob().then(blob => {
-                    // Create a download link for the blob
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.style.display = 'none';
-                    a.href = url;
-                    a.download = filename;
-                    document.body.appendChild(a);
-                    a.click();
-                    window.URL.revokeObjectURL(url);
-
-                    // Update processing status
-                    document.getElementById("statusMessage").textContent = "Processing complete!";
-                    document.getElementById("progressIndicator").style.width = "100%";
-
-                    // Re-enable the process button
-                    document.getElementById("processBtn").disabled = false;
-                });
             })
             .catch(error => {
                 console.error('Error:', error);
                 document.getElementById("statusMessage").textContent = "Error: " + error.message;
-                document.getElementById("progressIndicator").style.width = "0%";
-                document.getElementById("progressIndicator").style.backgroundColor = "#f44336";
-                document.getElementById("processBtn").disabled = false;
             });
         }
 
-        // Function to check processing status periodically
-        function checkProcessingStatus() {
-            // Update progress bar
-            var progress = parseInt(document.getElementById("progressIndicator").style.width) || 10;
-            if (progress < 90) {
-                progress += 5;
-                document.getElementById("progressIndicator").style.width = progress + "%";
-            }
+        function pollTaskStatus() {
+            if (!currentTaskId) return;
 
-            // Check status from the server
-            fetch("{% url 'check_processing_status' %}")
+            fetch(`{% url 'check_task_status' %}?task_id=${currentTaskId}`)
             .then(response => response.json())
             .then(data => {
-                if (data.status === "complete") {
-                    processingComplete(data.csv_file);
-                } else if (data.status === "error") {
+                // Update status display
+                document.getElementById("statusMessage").textContent = data.message;
+
+                if (data.status === 'processing' || data.status === 'post-processing') {
+                    // Continue polling
+                    setTimeout(pollTaskStatus, 2000);
+                }
+                else if (data.status === 'complete') {
+                    // Download the file
+                    window.location.href = `{% url 'download_result' %}?task_id=${currentTaskId}`;
+
+                    // Re-enable the process button
+                    document.getElementById("processBtn").disabled = false;
+                }
+                else if (data.status === 'error' || data.status === 'stopped') {
+                    // Show error
                     document.getElementById("statusMessage").textContent = "Error: " + data.message;
                     document.getElementById("progressIndicator").style.width = "0%";
                     document.getElementById("progressIndicator").style.backgroundColor = "#f44336";
-                } else {
-                    // Still processing, check again in 2 seconds
-                    setTimeout(checkProcessingStatus, 2000);
+
+                    // Re-enable the process button
+                    document.getElementById("processBtn").disabled = false;
                 }
             })
             .catch(error => {
-                console.error("Error checking status:", error);
-                // Try again in 3 seconds
-                setTimeout(checkProcessingStatus, 3000);
-            });
-        }
+                console.error('Error checking status:', error);
 
-        // Function to handle when processing is complete
-        function processingComplete(csvFile) {
-            // Update status
-            document.getElementById("statusMessage").textContent = "Processing complete!";
-            document.getElementById("progressIndicator").style.width = "100%";
-
-            // Display output location
-            document.getElementById("outputInfo").style.display = "block";
-            document.getElementById("outputLocation").textContent = csvFile;
-        }
-
-        // Function to stop the processing
-        function stopProcess() {
-            // Update status
-            document.getElementById("statusMessage").textContent = "Stopping process...";
-
-            // Send a request to stop backend processing
-            fetch("{% url 'stop_video' %}", {
-                method: "POST",
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    document.getElementById("statusMessage").textContent = "Error: " + data.error;
-                } else {
-                    document.getElementById("statusMessage").textContent = "Process stopped: " + data.status;
-                    document.getElementById("progressIndicator").style.width = "0%";
-                    // Hide output info when process is stopped
-                    document.getElementById("outputInfo").style.display = "none";
-                }
-            })
-            .catch(error => {
-                console.error("Error during stop process:", error);
-                document.getElementById("statusMessage").textContent = "An error occurred while stopping the process.";
+                // If there's an error in polling, try again after a longer delay
+                setTimeout(pollTaskStatus, 5000);
             });
         }
     </script>
