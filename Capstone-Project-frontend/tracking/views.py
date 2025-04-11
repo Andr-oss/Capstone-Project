@@ -212,26 +212,6 @@ def download_result(request):
     return response
 
 @csrf_exempt
-def stop_video(request):
-    """
-    Handles the stop process request.
-    Terminates the background process running run_dlc_pipeline.
-    """
-    global PROCESS, PROCESSING_STATUS
-    if request.method == 'POST':
-        if PROCESS is not None and PROCESS.is_alive():
-            PROCESS.terminate()
-            PROCESS.join()
-            PROCESS = None
-            PROCESSING_STATUS = {"status": "idle", "csv_file": None}
-            return JsonResponse({'status': 'Process stopped'})
-        else:
-            return JsonResponse({'status': 'No active process'})
-    else:
-        return JsonResponse({'error': 'Invalid request method'}, status=400)
-
-
-@csrf_exempt
 def visualize_csv(request):
     global VIS_PROCESS
     if request.method == 'POST':
