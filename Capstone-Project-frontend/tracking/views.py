@@ -43,9 +43,6 @@ def process_view(request):
 def visualize_view(request):
     return render(request, 'tracking/visualize.html')
 
-def livestream_view(request):
-    return render(request, 'tracking/livestream.html')
-
 
 # Global dictionary to track processing tasks
 processing_tasks = {}
