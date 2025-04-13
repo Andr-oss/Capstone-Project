@@ -1,35 +1,64 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  {% load static %}
   <meta charset="UTF-8" />
-  <title>Rodent Tracker Visualizer</title>
-  <style>
-    body { font-family: sans-serif; padding: 20px; }
-    canvas { border: 1px solid black; display: block; margin-top: 10px; }
-  </style>
+  <title>Visualize - Rodent Tracker</title>
+  <link rel="stylesheet" href="{% static 'tracking/css/style.css' %}">
 </head>
 <body>
-  <h2>Rodent Tracker Visualizer</h2>
+  <div class="container">
+    <h1>Visualize Rodent Tracking</h1>
 
-  <label>CSV File: <input type="file" id="csvFileInput" accept=".csv"></label><br>
-  <label>Video File (optional): <input type="file" id="videoFileInput" accept="video/*"></label><br><br>
+    <div class="card">
+      <form>
+        <label>CSV File:
+          <input type="file" id="csvFileInput" accept=".csv">
+        </label><br>
+        <label>Video File (optional):
+          <input type="file" id="videoFileInput" accept="video/*">
+        </label><br>
 
-  <label><input type="checkbox" id="toggleConnections" checked> Show Connections</label>
-  <label><input type="checkbox" id="toggleTrails" checked> Show Trails</label>
-  <label><input type="checkbox" id="toggleSegmentation" checked> Show Segmentation</label>
-  <label><input type="checkbox" id="toggleTrajectory" checked> Show Trajectory</label>
-  <label><input type="checkbox" id="toggleLegend" checked> Show Legend</label><br><br>
+        <div class="button-group">
+          <label><input type="checkbox" id="toggleConnections" checked> Show Connections</label>
+          <label><input type="checkbox" id="toggleTrails" checked> Show Trails</label>
+          <label><input type="checkbox" id="toggleSegmentation" checked> Show Segmentation</label>
+          <label><input type="checkbox" id="toggleTrajectory" checked> Show Trajectory</label>
+          <label><input type="checkbox" id="toggleLegend" checked> Show Legend</label>
+        </div>
 
-  <button id="startButton">Visualize</button>
-  <button id="resetButton">Reset</button><br><br>
+        <label for="trailLengthSlider">Trail Length: <span id="trailLengthValue">20</span></label>
+        <input type="range" id="trailLengthSlider" min="10" max="100" value="20">
 
-  <canvas id="plotCanvas" width="640" height="480"></canvas>
-  <video id="videoElement" style="display:none;" muted></video>
+        <div class="button-group">
+          <button id="startButton" type="button">Visualize</button>
+          <button id="resetButton" type="button">Reset</button>
+          <button id="exportButton" type="button">Export as Video</button>
+        </div>
+
+        <div id="statusMessage"></div>
+        <div id="exportProgress">
+          <div id="exportProgressBar"></div>
+        </div>
+      </form>
+    </div>
+
+    <div class="card">
+      <canvas id="plotCanvas" width="640" height="480"></canvas>
+      <video id="videoElement" style="display:none;" muted></video>
+    </div>
+  </div>
 
   <script>
     const canvas = document.getElementById("plotCanvas");
     const ctx = canvas.getContext("2d");
     const video = document.getElementById("videoElement");
+    const trailLengthSlider = document.getElementById("trailLengthSlider");
+    const trailLengthValue = document.getElementById("trailLengthValue");
+    const statusMessage = document.getElementById("statusMessage");
+    const exportButton = document.getElementById("exportButton");
+    const progressContainer = document.getElementById("exportProgress");
+    const progressBar = document.getElementById("exportProgressBar");
 
     let frames = [];
     let partNames = [];
@@ -41,6 +70,7 @@
     let csvReady = false;
     let videoReady = false;
     let startRequested = false;
+    let recording = false;
 
     let showConnections = true;
     let showTrails = true;
@@ -48,7 +78,7 @@
     let showTrajectory = true;
     let showLegend = true;
 
-    const trailLength = 20;
+    let trailLength = parseInt(trailLengthSlider.value);
     const trajectoryOpacity = 0.3;
 
     // Toggle listeners
@@ -154,6 +184,72 @@
         videoReady = true;
       };
     });
+
+    trailLengthSlider.addEventListener("input", () => {
+      trailLength = parseInt(trailLengthSlider.value);
+      trailLengthValue.textContent = trailLength;
+    });
+
+    exportButton.addEventListener("click", () => {
+      if (!csvReady) {
+        alert("Please upload and visualize a CSV first.");
+        return;
+      }
+      statusMessage.textContent = "Recording animation...";
+      progressContainer.style.display = "block";
+      progressBar.style.width = "0%";
+      startRecording();
+    });
+
+    function startRecording() {
+      const stream = canvas.captureStream(30);
+      const recorder = new MediaRecorder(stream);
+      let chunks = [];
+      recorder.ondataavailable = e => chunks.push(e.data);
+      recorder.onstop = () => {
+        const blob = new Blob(chunks, { type: 'video/webm' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'rodent_tracking_export.webm';
+        a.click();
+        URL.revokeObjectURL(url);
+        statusMessage.textContent = "Download complete.";
+        progressBar.style.width = "100%";
+      };
+
+      recorder.start();
+      recording = true;
+      progressBar.style.width = "0%";
+
+      let frame = 0;
+      const total = frames.length;
+
+    function drawFrame() {
+      if (frame >= total) {
+        recorder.stop();
+        recording = false;
+        return;
+      }
+
+      if (videoReady) {
+        const videoFrame = frame / total * video.duration;
+        video.currentTime = videoFrame;
+        video.pause();
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      } else {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+
+      drawFrameLogic(frames[frame]);
+
+      frame++;
+      progressBar.style.width = `${(frame / total) * 100}%`;
+      requestAnimationFrame(drawFrame);
+    }
+
+    drawFrame();
+  }
 
     function tryStart() {
       if (!csvReady || !startRequested) return;
@@ -299,7 +395,9 @@
           positions[part] = [nx, ny];
           if (!trails[part]) trails[part] = [];
           trails[part].push([nx, ny]);
-          if (trails[part].length > trailLength) trails[part].shift();
+          while (trails[part].length > trailLength) {
+            trails[part].shift();  // Trim until it fits
+          }
         }
       }
       if (positions['body_center'] && positions['left_body'] && positions['right_body']) {
