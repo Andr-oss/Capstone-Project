@@ -9,6 +9,50 @@ def postprocess_csv(input_file, output_file):
         output_file (str): Path to the output csv file.
     """
 
+    def is_manual_reset(df, frame_idx, threshold=50, min_parts_jumping=4):
+        """
+        Check if a frame likely represents a manual reset based on multiple body parts
+        showing large jumps in either x or y directions.
+        """
+        jump_count = 0
+        body_parts = ["Nose", "Left_Ear", "Right_Ear", "Body_Center", "Left_Body", "Right_Body", "Tail_Base"]
+
+        for part in body_parts:
+            x_col, y_col = f"{part}_x", f"{part}_y"
+            if frame_idx == 0 or x_col not in df.columns or y_col not in df.columns:
+                continue
+
+            prev_x, curr_x = df.at[frame_idx - 1, x_col], df.at[frame_idx, x_col]
+            prev_y, curr_y = df.at[frame_idx - 1, y_col], df.at[frame_idx, y_col]
+
+            if pd.notna(prev_x) and pd.notna(curr_x):
+                if abs(curr_x - prev_x) > threshold:
+                    jump_count += 1
+                    continue  # already counted, skip y check
+
+            if pd.notna(prev_y) and pd.notna(curr_y):
+                if abs(curr_y - prev_y) > threshold:
+                    jump_count += 1
+
+        return jump_count >= min_parts_jumping
+
+    def remove_outliers(df, part, threshold=100):
+        """
+        Remove outliers from the coordinate columns of a given body part by setting
+        values with large frame-to-frame jumps to NaN.
+        Parameters:
+            df (pd.DataFrame): The dataframe with coordinate data.
+            part (str): The name of the body part.
+            threshold (float): Distance threshold beyond which values are considered outliers.
+        """
+        x_col, y_col = f"{part}_x", f"{part}_y"
+        if x_col not in df.columns or y_col not in df.columns:
+            return
+        x_diff = df[x_col].diff().abs()
+        y_diff = df[y_col].diff().abs()
+        outlier_mask = (x_diff > threshold) | (y_diff > threshold)
+        df.loc[outlier_mask, [x_col, y_col]] = np.nan
+
     def estimate_missing_part(part, row):
         """
         Estimate the missing part if missing in file.
@@ -58,6 +102,7 @@ def postprocess_csv(input_file, output_file):
                 df[col] = pd.to_numeric(df[col].replace('', np.nan), errors='coerce')
 
     for part in body_parts:
+        remove_outliers(df, part)
         for suffix in ['_x', '_y']:
             col = f"{part}{suffix}"
             if col in df.columns:

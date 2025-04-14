@@ -20,11 +20,11 @@
         </label><br>
 
         <div class="button-group">
-          <label><input type="checkbox" id="toggleConnections" checked> Show Connections</label>
-          <label><input type="checkbox" id="toggleTrails" checked> Show Trails</label>
-          <label><input type="checkbox" id="toggleSegmentation" checked> Show Segmentation</label>
-          <label><input type="checkbox" id="toggleTrajectory" checked> Show Trajectory</label>
-          <label><input type="checkbox" id="toggleLegend" checked> Show Legend</label>
+          <label><input type="checkbox" id="toggleConnections"> Show Connections</label>
+          <label><input type="checkbox" id="toggleTrails"> Show Trails</label>
+          <label><input type="checkbox" id="toggleSegmentation"> Show Segmentation</label>
+          <label><input type="checkbox" id="toggleTrajectory"> Show Trajectory</label>
+          <label><input type="checkbox" id="toggleLegend"> Show Legend</label>
         </div>
 
         <label for="trailLengthSlider">Trail Length: <span id="trailLengthValue">20</span></label>
@@ -72,11 +72,11 @@
     let startRequested = false;
     let recording = false;
 
-    let showConnections = true;
-    let showTrails = true;
-    let showSegmentation = true;
-    let showTrajectory = true;
-    let showLegend = true;
+    let showConnections = false;
+    let showTrails = false;
+    let showSegmentation = false;
+    let showTrajectory = false;
+    let showLegend = false;
 
     let trailLength = parseInt(trailLengthSlider.value);
     const trajectoryOpacity = 0.3;
