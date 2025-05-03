@@ -199,14 +199,20 @@ def download_result(request):
     if task['status'] != 'complete':
         return HttpResponse("Processing not complete", status=400)
 
-    # Return the CSV file
+    # Prepare response
     response = HttpResponse(task['csv_content'], content_type='text/csv')
     response['Content-Disposition'] = f'attachment; filename="{task["csv_filename"]}"'
 
-    # Optionally, clean up task data after download
-    # del processing_tasks[task_id]
+    # Delete the temp directory
+    temp_dir = task.get('temp_dir')
+    if temp_dir and os.path.exists(temp_dir):
+        shutil.rmtree(temp_dir, ignore_errors=True)
+
+    # Delete the task from the dictionary
+    del processing_tasks[task_id]
 
     return response
+
 
 @csrf_exempt
 def visualize_csv(request):
