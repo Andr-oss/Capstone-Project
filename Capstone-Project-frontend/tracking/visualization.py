@@ -550,9 +550,6 @@ class RodentVisualizerCV:
                         cv2.putText(canvas, part, (px + 10, py), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
                                     self.colors.get(part, (0, 0, 255)), 1)
 
-            # Add a frame counter overlay.
-            cv2.putText(canvas, f"Frame: {frame_idx + 1}/{self.frames}", (20, 30),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 0), 2)
 
             # Optionally, add legend overlays here if show_legend is True.
             if self.show_legend:
@@ -577,17 +574,16 @@ class RodentVisualizerCV:
 # Example usage
 if __name__ == "__main__":
     # Replace with your actual CSV file path
-    input_file = r"D:\Capstone-Project\AndrewFirstTraining-Andrew-2025-03-08\output_postprocessed.csv"  # Update with your path
-    video_file = r"D:\Capstone-Project\AndrewFirstTraining-Andrew-2025-03-08\f042814_Video.mp4"  # Optional video
-    #video_file = r"C:\Users\mbazi\Downloads\P20221101_Video.mp4"  # Optional video
+    input_file = r"C:\Users\Bazil\Downloads\output 413-10.csv"  # Update with your path
+    video_file = r"C:\Users\Bazil\Downloads\Rodent_Video_3.mp4"  # Optional video
 
     # Create visualizer with customizable visualization options
     visualizer = RodentVisualizerCV(
         input_file,
-        #video_file,
+        video_file,
         width=480,
         height=480,
-        trail_length=50,  # Show last x frames of trail
+        trail_length=10,  # Show last x frames of trail
         show_trails=False,
         show_trajectory=True,
         trajectory_opacity=0.3,
@@ -597,7 +593,8 @@ if __name__ == "__main__":
         show_labels=False,
         show_legend=False
     )
-    visualizer.display_animation(delay=30)  # delay for debugging
+    #visualizer.display_animation(delay=30)
+    visualizer.write_animation_to_video("output_30_blank.mp4", fps=60)  # Save to MP4
 
 
 
