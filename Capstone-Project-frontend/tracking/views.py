@@ -201,7 +201,8 @@ def download_result(request):
 
     # Prepare response
     response = HttpResponse(task['csv_content'], content_type='text/csv')
-    response['Content-Disposition'] = f'attachment; filename="{task["csv_filename"]}"'
+    video_name = Path(task['video_path']).stem
+    response['Content-Disposition'] = f'attachment; filename="{video_name}_processed.csv"'
 
     # Delete the temp directory
     temp_dir = task.get('temp_dir')
