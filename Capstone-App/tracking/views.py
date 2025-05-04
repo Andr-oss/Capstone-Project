@@ -14,8 +14,7 @@ import os
 from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse, FileResponse, Http404
 from django.views.decorators.csrf import csrf_exempt
-from run_vis import run_visualization_to_client
-from post_process import postprocess_csv
+from tracking.post_process import postprocess_csv
 
 
 
@@ -24,7 +23,7 @@ BASE_DIR = pathlib.Path(__file__).resolve().parent.parent
 sys.path.append(str(BASE_DIR.parent))
 
 # Import your backend function from dlc_runner
-import dlc_runner
+# import dlc_runner
 
 # Global variables
 PROCESS = None
@@ -141,7 +140,7 @@ def process_video(request):
                 }
 
                 # Start background processing
-                config_path = r"Capstone-App/DLC Trained Model/config.yaml"
+                config_path = os.path.join(BASE_DIR.parent, 'Capstone-App', 'DLC Trained Model', 'config.yaml')
                 thread = threading.Thread(
                     target=process_video_background,
                     args=(task_id, video_path, config_path, temp_dir)

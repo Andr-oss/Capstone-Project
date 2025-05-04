@@ -1,15 +1,21 @@
-    # Project definitions (do not edit)
+# Project definitions (do not edit)
 Task: Capstone-project-DLC
 scorer: Andrew
 date: Mar8
 multianimalproject: false
 identity:
 
-    # Project path (change when moving around)
-project_path: C:\Users\Bazil\Downloads\AndrewFirstTraining-Andrew-2025-03-08
-model_folder: dlc-models-pytorch
 
-    # Annotation data set configuration (and individual video cropping parameters)
+# Project path (change when moving around)
+project_path: C:\Users\Bazil\Documents\GitHub\Capstone-Project\Capstone-App\DLC Trained
+  Model
+
+
+# Default DeepLabCut engine to use for shuffle creation (either pytorch or tensorflow)
+engine: pytorch
+
+
+# Annotation data set configuration (and individual video cropping parameters)
 video_sets:
   D:\Capstone-Project\Capstone-project-DLC-Andrew-2025-02-21\videos\P20221101_Video.mp4:
     crop: 0, 240, 0, 240
@@ -41,11 +47,15 @@ bodyparts:
     # Fraction of video to start/stop when extracting frames for labeling/refinement
 
     # Fraction of video to start/stop when extracting frames for labeling/refinement
+
+
+# Fraction of video to start/stop when extracting frames for labeling/refinement
 start: 0
 stop: 1
 numframes2pick: 600
 
-    # Plotting configuration
+
+# Plotting configuration
 skeleton:
 - [Nose, Left_Ear]
 - [Nose, Right_Ear]
@@ -60,31 +70,36 @@ dotsize: 12
 alphavalue: 0.7
 colormap: rainbow
 
-    # Training,Evaluation and Analysis configuration
+
+# Training,Evaluation and Analysis configuration
 TrainingFraction:
 - 0.95
 iteration: 0
 default_net_type: resnet_50
 default_augmenter: default
 snapshotindex: -1
+detector_snapshotindex: -1
 batch_size: 8
+detector_batch_size: 1
 
-    # Cropping Parameters (for analysis and outlier frame detection)
+
+# Cropping Parameters (for analysis and outlier frame detection)
 cropping: false
-    #if cropping is true for analysis, then set the values here:
+#if cropping is true for analysis, then set the values here:
 x1: 0
 x2: 640
 y1: 277
 y2: 624
 
-    # Refinement configuration (parameters from annotation dataset configuration also relevant in this stage)
+
+# Refinement configuration (parameters from annotation dataset configuration also relevant in this stage)
 corner2move2:
 - 50
 - 50
 move2corner: true
-engine: pytorch
-detector_snapshotindex: -1
-detector_batch_size: 1
+
+
+# Conversion tables to fine-tune SuperAnimal weights
 SuperAnimalConversionTables:
   superanimal_topviewmouse: 
     D:/Capstone-Project/Capstone-project-DLC-Andrew-2025-02-21/superanimal_conversion_table.csv
@@ -92,6 +107,7 @@ SuperAnimalConversionTables:
 
 
 
+model_folder: dlc-models-pytorch
 labeled-data:
   P20221101_Video_labeled: true
   f042814_Video_labeled: true
