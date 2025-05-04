@@ -1,0 +1,22 @@
+dataset: D:\Capstone-Project\AndrewFirstTraining-Andrew-2025-03-08
+dataset_type: multi-animal-imgaug
+num_joints: 7
+all_joints:
+- - 0
+- - 1
+- - 2
+- - 3
+- - 4
+- - 5
+- - 6
+all_joints_names:
+- Nose
+- Left_Ear
+- Right_Ear
+- Body_Center
+- Left_Body
+- Right_Body
+- Tail_Base
+net_type: resnet_50
+global_scale: 1
+scoremap_dir: test

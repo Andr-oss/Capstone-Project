@@ -1,0 +1,99 @@
+    # Project definitions (do not edit)
+Task: Capstone-project-DLC
+scorer: Andrew
+date: Mar8
+multianimalproject: false
+identity:
+
+    # Project path (change when moving around)
+project_path: C:\Users\Bazil\Downloads\AndrewFirstTraining-Andrew-2025-03-08
+model_folder: dlc-models-pytorch
+
+    # Annotation data set configuration (and individual video cropping parameters)
+video_sets:
+  D:\Capstone-Project\Capstone-project-DLC-Andrew-2025-02-21\videos\P20221101_Video.mp4:
+    crop: 0, 240, 0, 240
+  D:\Capstone-Project\AndrewFirstTraining-Andrew-2025-03-08\f042814_Video.avi:
+    crop: 0, 240, 0, 240
+
+  D:\Downloads\P20221101_Video.mp4:
+    crop: 0, 240, 0, 240
+bodyparts:
+- Nose
+- Left_Ear
+- Right_Ear
+- Body_Center
+- Left_Body
+- Right_Body
+- Tail_Base
+
+
+
+
+# Fraction of video to start/stop when extracting frames for labeling/refinement
+
+
+# Fraction of video to start/stop when extracting frames for labeling/refinement
+
+
+# Fraction of video to start/stop when extracting frames for labeling/refinement
+
+    # Fraction of video to start/stop when extracting frames for labeling/refinement
+
+    # Fraction of video to start/stop when extracting frames for labeling/refinement
+start: 0
+stop: 1
+numframes2pick: 600
+
+    # Plotting configuration
+skeleton:
+- [Nose, Left_Ear]
+- [Nose, Right_Ear]
+- [Left_Ear, Right_Ear]
+- [Body_Center, Tail_Base]
+- [Left_Body, Right_Body]
+- [Body_Center, Left_Body]
+- [Body_Center, Right_Body]
+skeleton_color: black
+pcutoff: 0.6
+dotsize: 12
+alphavalue: 0.7
+colormap: rainbow
+
+    # Training,Evaluation and Analysis configuration
+TrainingFraction:
+- 0.95
+iteration: 0
+default_net_type: resnet_50
+default_augmenter: default
+snapshotindex: -1
+batch_size: 8
+
+    # Cropping Parameters (for analysis and outlier frame detection)
+cropping: false
+    #if cropping is true for analysis, then set the values here:
+x1: 0
+x2: 640
+y1: 277
+y2: 624
+
+    # Refinement configuration (parameters from annotation dataset configuration also relevant in this stage)
+corner2move2:
+- 50
+- 50
+move2corner: true
+engine: pytorch
+detector_snapshotindex: -1
+detector_batch_size: 1
+SuperAnimalConversionTables:
+  superanimal_topviewmouse: 
+    D:/Capstone-Project/Capstone-project-DLC-Andrew-2025-02-21/superanimal_conversion_table.csv
+
+
+
+
+labeled-data:
+  P20221101_Video_labeled: true
+  f042814_Video_labeled: true
+
+

@@ -14,8 +14,8 @@ import os
 from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse, FileResponse, Http404
 from django.views.decorators.csrf import csrf_exempt
-from tracking.run_vis import run_visualization_to_client
-from tracking.post_process import postprocess_csv
+from run_vis import run_visualization_to_client
+from post_process import postprocess_csv
 
 
 
@@ -24,7 +24,7 @@ BASE_DIR = pathlib.Path(__file__).resolve().parent.parent
 sys.path.append(str(BASE_DIR.parent))
 
 # Import your backend function from dlc_runner
-from tracking import dlc_runner
+import dlc_runner
 
 # Global variables
 PROCESS = None
@@ -141,7 +141,7 @@ def process_video(request):
                 }
 
                 # Start background processing
-                config_path = r"C:\Users\Bazil\Downloads\AndrewFirstTraining-Andrew-2025-03-08\config.yaml"
+                config_path = r"Capstone-App/DLC Trained Model/config.yaml"
                 thread = threading.Thread(
                     target=process_video_background,
                     args=(task_id, video_path, config_path, temp_dir)
@@ -357,7 +357,7 @@ def run_visualize(request):
             output_video = os.path.join(temp_dir, f'visualization_{int(time.time())}.mp4')
 
             # Create an instance of your visualizer.
-            from tracking.visualization import RodentVisualizerCV
+            from visualization import RodentVisualizerCV
             visualizer = RodentVisualizerCV(
                 csv_path=temp_csv_path,
                 video_path=temp_video_path,

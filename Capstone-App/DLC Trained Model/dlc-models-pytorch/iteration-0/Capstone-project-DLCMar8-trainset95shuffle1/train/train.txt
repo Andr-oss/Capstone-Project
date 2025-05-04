@@ -1,0 +1,901 @@
+2025-03-16 10:43:05 Training with configuration:
+2025-03-16 10:43:05 data:
+2025-03-16 10:43:05   colormode: RGB
+2025-03-16 10:43:05   inference:
+2025-03-16 10:43:05     normalize_images: True
+2025-03-16 10:43:05   train:
+2025-03-16 10:43:05     affine:
+2025-03-16 10:43:05       p: 0.5
+2025-03-16 10:43:05       rotation: 30
+2025-03-16 10:43:05       scaling: [0.5, 1.25]
+2025-03-16 10:43:05       translation: 0
+2025-03-16 10:43:05     covering: False
+2025-03-16 10:43:05     crop_sampling:
+2025-03-16 10:43:05       width: 448
+2025-03-16 10:43:05       height: 448
+2025-03-16 10:43:05       max_shift: 0.1
+2025-03-16 10:43:05       method: hybrid
+2025-03-16 10:43:05     gaussian_noise: 12.75
+2025-03-16 10:43:05     hist_eq: False
+2025-03-16 10:43:05     motion_blur: False
+2025-03-16 10:43:05     normalize_images: True
+2025-03-16 10:43:05 device: auto
+2025-03-16 10:43:05 metadata:
+2025-03-16 10:43:05   project_path: D:\Capstone-Project\AndrewFirstTraining-Andrew-2025-03-08
+2025-03-16 10:43:05   pose_config_path: D:\Capstone-Project\AndrewFirstTraining-Andrew-2025-03-08\dlc-models-pytorch\iteration-0\Capstone-project-DLCMar8-trainset95shuffle1\train\pytorch_config.yaml
+2025-03-16 10:43:05   bodyparts: ['Nose', 'Left_Ear', 'Right_Ear', 'Body_Center', 'Left_Body', 'Right_Body', 'Tail_Base']
+2025-03-16 10:43:05   unique_bodyparts: []
+2025-03-16 10:43:05   individuals: ['animal']
+2025-03-16 10:43:05   with_identity: None
+2025-03-16 10:43:05 method: bu
+2025-03-16 10:43:05 model:
+2025-03-16 10:43:05   backbone:
+2025-03-16 10:43:05     type: ResNet
+2025-03-16 10:43:05     model_name: resnet50_gn
+2025-03-16 10:43:05     output_stride: 16
+2025-03-16 10:43:05     freeze_bn_stats: False
+2025-03-16 10:43:05     freeze_bn_weights: False
+2025-03-16 10:43:05   backbone_output_channels: 2048
+2025-03-16 10:43:05   heads:
+2025-03-16 10:43:05     bodypart:
+2025-03-16 10:43:05       type: HeatmapHead
+2025-03-16 10:43:05       weight_init: normal
+2025-03-16 10:43:05       predictor:
+2025-03-16 10:43:05         type: HeatmapPredictor
+2025-03-16 10:43:05         apply_sigmoid: False
+2025-03-16 10:43:05         clip_scores: True
+2025-03-16 10:43:05         location_refinement: True
+2025-03-16 10:43:05         locref_std: 7.2801
+2025-03-16 10:43:05       target_generator:
+2025-03-16 10:43:05         type: HeatmapGaussianGenerator
+2025-03-16 10:43:05         num_heatmaps: 7
+2025-03-16 10:43:05         pos_dist_thresh: 17
+2025-03-16 10:43:05         heatmap_mode: KEYPOINT
+2025-03-16 10:43:05         gradient_masking: False
+2025-03-16 10:43:05         generate_locref: True
+2025-03-16 10:43:05         locref_std: 7.2801
+2025-03-16 10:43:05       criterion:
+2025-03-16 10:43:05         heatmap:
+2025-03-16 10:43:05           type: WeightedMSECriterion
+2025-03-16 10:43:05           weight: 1.0
+2025-03-16 10:43:05         locref:
+2025-03-16 10:43:05           type: WeightedHuberCriterion
+2025-03-16 10:43:05           weight: 0.05
+2025-03-16 10:43:05       heatmap_config:
+2025-03-16 10:43:05         channels: [2048, 7]
+2025-03-16 10:43:05         kernel_size: [3]
+2025-03-16 10:43:05         strides: [2]
+2025-03-16 10:43:05       locref_config:
+2025-03-16 10:43:05         channels: [2048, 14]
+2025-03-16 10:43:05         kernel_size: [3]
+2025-03-16 10:43:05         strides: [2]
+2025-03-16 10:43:05 net_type: resnet_50
+2025-03-16 10:43:05 runner:
+2025-03-16 10:43:05   type: PoseTrainingRunner
+2025-03-16 10:43:05   gpus: None
+2025-03-16 10:43:05   key_metric: test.mAP
+2025-03-16 10:43:05   key_metric_asc: True
+2025-03-16 10:43:05   eval_interval: 10
+2025-03-16 10:43:05   optimizer:
+2025-03-16 10:43:05     type: AdamW
+2025-03-16 10:43:05     params:
+2025-03-16 10:43:05       lr: 0.001
+2025-03-16 10:43:05   scheduler:
+2025-03-16 10:43:05     type: LRListScheduler
+2025-03-16 10:43:05     params:
+2025-03-16 10:43:05       lr_list: [[0.0001], [1e-05]]
+2025-03-16 10:43:05       milestones: [90, 120]
+2025-03-16 10:43:05   snapshots:
+2025-03-16 10:43:05     max_snapshots: 5
+2025-03-16 10:43:05     save_epochs: 50
+2025-03-16 10:43:05     save_optimizer_state: False
+2025-03-16 10:43:05 train_settings:
+2025-03-16 10:43:05   batch_size: 1
+2025-03-16 10:43:05   dataloader_workers: 0
+2025-03-16 10:43:05   dataloader_pin_memory: False
+2025-03-16 10:43:05   display_iters: 500
+2025-03-16 10:43:05   epochs: 300
+2025-03-16 10:43:05   seed: 42
+2025-03-16 10:43:05 Loading pretrained weights from Hugging Face hub (timm/resnet50_gn.a1h_in1k)
+2025-03-16 10:43:05 [timm/resnet50_gn.a1h_in1k] Safe alternative available for 'pytorch_model.bin' (as 'model.safetensors'). Loading weights using safetensors.
+2025-03-16 10:43:05 Data Transforms:
+2025-03-16 10:43:05   Training:   Compose([
+  Affine(always_apply=False, p=0.5, interpolation=1, mask_interpolation=0, cval=0, mode=0, scale={'x': (0.5, 1.25), 'y': (0.5, 1.25)}, translate_percent=None, translate_px={'x': (0, 0), 'y': (0, 0)}, rotate=(-30, 30), fit_output=False, shear={'x': (0.0, 0.0), 'y': (0.0, 0.0)}, cval_mask=0, keep_ratio=True, rotate_method='largest_box'),
+  PadIfNeeded(always_apply=True, p=1.0, min_height=448, min_width=448, pad_height_divisor=None, pad_width_divisor=None, position=PositionType.CENTER, border_mode=0, value=None, mask_value=None),
+  KeypointAwareCrop(always_apply=True, p=1.0, width=448, height=448, max_shift=0.1, crop_sampling='hybrid'),
+  GaussNoise(always_apply=False, p=0.5, var_limit=(0, 162.5625), per_channel=True, mean=0),
+  Normalize(always_apply=False, p=1.0, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225], max_pixel_value=255.0),
+], p=1.0, bbox_params={'format': 'coco', 'label_fields': ['bbox_labels'], 'min_area': 0.0, 'min_visibility': 0.0, 'min_width': 0.0, 'min_height': 0.0, 'check_each_transform': True}, keypoint_params={'format': 'xy', 'label_fields': ['class_labels'], 'remove_invisible': False, 'angle_in_degrees': True, 'check_each_transform': True}, additional_targets={}, is_check_shapes=True)
+2025-03-16 10:43:05   Validation: Compose([
+  Normalize(always_apply=False, p=1.0, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225], max_pixel_value=255.0),
+], p=1.0, bbox_params={'format': 'coco', 'label_fields': ['bbox_labels'], 'min_area': 0.0, 'min_visibility': 0.0, 'min_width': 0.0, 'min_height': 0.0, 'check_each_transform': True}, keypoint_params={'format': 'xy', 'label_fields': ['class_labels'], 'remove_invisible': False, 'angle_in_degrees': True, 'check_each_transform': True}, additional_targets={}, is_check_shapes=True)
+2025-03-16 10:43:06 
+Note: According to your model configuration, you're training with batch size 1 and/or ``freeze_bn_stats=false``. This is not an optimal setting if you have powerful GPUs.
+This is good for small batch sizes (e.g., when training on a CPU), where you should keep ``freeze_bn_stats=true``.
+If you're using a GPU to train, you can obtain faster performance by setting a larger batch size (the biggest power of 2 where you don't geta CUDA out-of-memory error, such as 8, 16, 32 or 64 depending on the model, size of your images, and GPU memory) and ``freeze_bn_stats=false`` for the backbone of your model. 
+This also allows you to increase the learning rate (empirically you can scale the learning rate by sqrt(batch_size) times).
+
+2025-03-16 10:43:06 Using 844 images and 45 for testing
+2025-03-16 10:43:06 
+Starting pose model training...
+--------------------------------------------------
+2025-03-16 10:44:27 Number of iterations: 500, loss: 0.00442, lr: 0.001
+2025-03-16 10:45:22 Epoch 1/300 (lr=0.001), train loss 0.00916
+2025-03-16 10:46:44 Number of iterations: 500, loss: 0.00134, lr: 0.001
+2025-03-16 10:47:41 Epoch 2/300 (lr=0.001), train loss 0.00644
+2025-03-16 10:49:05 Number of iterations: 500, loss: 0.00196, lr: 0.001
+2025-03-16 10:50:02 Epoch 3/300 (lr=0.001), train loss 0.00515
+2025-03-16 10:51:26 Number of iterations: 500, loss: 0.00044, lr: 0.001
+2025-03-16 10:52:24 Epoch 4/300 (lr=0.001), train loss 0.00459
+2025-03-16 10:53:48 Number of iterations: 500, loss: 0.00614, lr: 0.001
+2025-03-16 10:54:46 Epoch 5/300 (lr=0.001), train loss 0.00419
+2025-03-16 10:56:11 Number of iterations: 500, loss: 0.00037, lr: 0.001
+2025-03-16 10:57:09 Epoch 6/300 (lr=0.001), train loss 0.00392
+2025-03-16 10:58:33 Number of iterations: 500, loss: 0.00178, lr: 0.001
+2025-03-16 10:59:31 Epoch 7/300 (lr=0.001), train loss 0.00370
+2025-03-16 11:00:55 Number of iterations: 500, loss: 0.00421, lr: 0.001
+2025-03-16 11:01:53 Epoch 8/300 (lr=0.001), train loss 0.00332
+2025-03-16 11:03:17 Number of iterations: 500, loss: 0.00030, lr: 0.001
+2025-03-16 11:04:15 Epoch 9/300 (lr=0.001), train loss 0.00324
+2025-03-16 11:05:40 Number of iterations: 500, loss: 0.00485, lr: 0.001
+2025-03-16 11:06:37 Training for epoch 10 done, starting evaluation
+2025-03-16 11:06:39 Epoch 10/300 (lr=0.001), train loss 0.00295, valid loss 0.00628
+2025-03-16 11:06:39 Model performance:
+2025-03-16 11:06:39   metrics/test.rmse:          16.43
+2025-03-16 11:06:39   metrics/test.rmse_pcutoff:   6.88
+2025-03-16 11:06:39   metrics/test.mAP:           32.01
+2025-03-16 11:06:39   metrics/test.mAR:           37.73
+2025-03-16 11:08:03 Number of iterations: 500, loss: 0.00309, lr: 0.001
+2025-03-16 11:09:01 Epoch 11/300 (lr=0.001), train loss 0.00279
+2025-03-16 11:10:26 Number of iterations: 500, loss: 0.00215, lr: 0.001
+2025-03-16 11:11:24 Epoch 12/300 (lr=0.001), train loss 0.00284
+2025-03-16 11:12:48 Number of iterations: 500, loss: 0.00037, lr: 0.001
+2025-03-16 11:13:46 Epoch 13/300 (lr=0.001), train loss 0.00277
+2025-03-16 11:15:11 Number of iterations: 500, loss: 0.00108, lr: 0.001
+2025-03-16 11:16:09 Epoch 14/300 (lr=0.001), train loss 0.00255
+2025-03-16 11:17:34 Number of iterations: 500, loss: 0.00111, lr: 0.001
+2025-03-16 11:18:32 Epoch 15/300 (lr=0.001), train loss 0.00255
+2025-03-16 11:19:56 Number of iterations: 500, loss: 0.00295, lr: 0.001
+2025-03-16 11:20:54 Epoch 16/300 (lr=0.001), train loss 0.00234
+2025-03-16 11:22:19 Number of iterations: 500, loss: 0.00124, lr: 0.001
+2025-03-16 11:23:17 Epoch 17/300 (lr=0.001), train loss 0.00229
+2025-03-16 11:24:41 Number of iterations: 500, loss: 0.00278, lr: 0.001
+2025-03-16 11:25:40 Epoch 18/300 (lr=0.001), train loss 0.00227
+2025-03-16 11:27:04 Number of iterations: 500, loss: 0.00038, lr: 0.001
+2025-03-16 11:28:02 Epoch 19/300 (lr=0.001), train loss 0.00226
+2025-03-16 11:29:27 Number of iterations: 500, loss: 0.00197, lr: 0.001
+2025-03-16 11:30:24 Training for epoch 20 done, starting evaluation
+2025-03-16 11:30:26 Epoch 20/300 (lr=0.001), train loss 0.00228, valid loss 0.00581
+2025-03-16 11:30:26 Model performance:
+2025-03-16 11:30:26   metrics/test.rmse:           8.65
+2025-03-16 11:30:26   metrics/test.rmse_pcutoff:   6.23
+2025-03-16 11:30:26   metrics/test.mAP:           38.63
+2025-03-16 11:30:26   metrics/test.mAR:           43.18
+2025-03-16 11:31:51 Number of iterations: 500, loss: 0.00445, lr: 0.001
+2025-03-16 11:32:49 Epoch 21/300 (lr=0.001), train loss 0.00205
+2025-03-16 11:34:14 Number of iterations: 500, loss: 0.00115, lr: 0.001
+2025-03-16 11:35:12 Epoch 22/300 (lr=0.001), train loss 0.00206
+2025-03-16 11:36:36 Number of iterations: 500, loss: 0.00026, lr: 0.001
+2025-03-16 11:37:34 Epoch 23/300 (lr=0.001), train loss 0.00204
+2025-03-16 11:38:59 Number of iterations: 500, loss: 0.00181, lr: 0.001
+2025-03-16 11:39:57 Epoch 24/300 (lr=0.001), train loss 0.00191
+2025-03-16 11:41:22 Number of iterations: 500, loss: 0.00379, lr: 0.001
+2025-03-16 11:42:20 Epoch 25/300 (lr=0.001), train loss 0.00190
+2025-03-16 11:43:45 Number of iterations: 500, loss: 0.00220, lr: 0.001
+2025-03-16 11:44:43 Epoch 26/300 (lr=0.001), train loss 0.00194
+2025-03-16 11:46:07 Number of iterations: 500, loss: 0.00564, lr: 0.001
+2025-03-16 11:47:06 Epoch 27/300 (lr=0.001), train loss 0.00188
+2025-03-16 11:48:31 Number of iterations: 500, loss: 0.00309, lr: 0.001
+2025-03-16 11:49:30 Epoch 28/300 (lr=0.001), train loss 0.00187
+2025-03-16 11:50:56 Number of iterations: 500, loss: 0.00051, lr: 0.001
+2025-03-16 11:51:54 Epoch 29/300 (lr=0.001), train loss 0.00182
+2025-03-16 11:53:19 Number of iterations: 500, loss: 0.00193, lr: 0.001
+2025-03-16 11:54:17 Training for epoch 30 done, starting evaluation
+2025-03-16 11:54:19 Epoch 30/300 (lr=0.001), train loss 0.00163, valid loss 0.00495
+2025-03-16 11:54:19 Model performance:
+2025-03-16 11:54:19   metrics/test.rmse:           8.92
+2025-03-16 11:54:19   metrics/test.rmse_pcutoff:   3.74
+2025-03-16 11:54:19   metrics/test.mAP:           48.06
+2025-03-16 11:54:19   metrics/test.mAR:           51.14
+2025-03-16 11:55:44 Number of iterations: 500, loss: 0.00064, lr: 0.001
+2025-03-16 11:56:42 Epoch 31/300 (lr=0.001), train loss 0.00177
+2025-03-16 11:58:06 Number of iterations: 500, loss: 0.00245, lr: 0.001
+2025-03-16 11:59:04 Epoch 32/300 (lr=0.001), train loss 0.00176
+2025-03-16 12:00:29 Number of iterations: 500, loss: 0.00119, lr: 0.001
+2025-03-16 12:01:27 Epoch 33/300 (lr=0.001), train loss 0.00170
+2025-03-16 12:02:52 Number of iterations: 500, loss: 0.00027, lr: 0.001
+2025-03-16 12:03:50 Epoch 34/300 (lr=0.001), train loss 0.00156
+2025-03-16 12:05:14 Number of iterations: 500, loss: 0.00205, lr: 0.001
+2025-03-16 12:06:13 Epoch 35/300 (lr=0.001), train loss 0.00157
+2025-03-16 12:07:37 Number of iterations: 500, loss: 0.00045, lr: 0.001
+2025-03-16 12:08:36 Epoch 36/300 (lr=0.001), train loss 0.00168
+2025-03-16 12:10:01 Number of iterations: 500, loss: 0.00221, lr: 0.001
+2025-03-16 12:10:59 Epoch 37/300 (lr=0.001), train loss 0.00167
+2025-03-16 12:12:24 Number of iterations: 500, loss: 0.00028, lr: 0.001
+2025-03-16 12:13:22 Epoch 38/300 (lr=0.001), train loss 0.00156
+2025-03-16 12:14:46 Number of iterations: 500, loss: 0.00137, lr: 0.001
+2025-03-16 12:15:45 Epoch 39/300 (lr=0.001), train loss 0.00159
+2025-03-16 12:17:09 Number of iterations: 500, loss: 0.00021, lr: 0.001
+2025-03-16 12:18:07 Training for epoch 40 done, starting evaluation
+2025-03-16 12:18:09 Epoch 40/300 (lr=0.001), train loss 0.00151, valid loss 0.00533
+2025-03-16 12:18:09 Model performance:
+2025-03-16 12:18:09   metrics/test.rmse:          19.64
+2025-03-16 12:18:09   metrics/test.rmse_pcutoff:   3.82
+2025-03-16 12:18:09   metrics/test.mAP:           49.51
+2025-03-16 12:18:09   metrics/test.mAR:           52.05
+2025-03-16 12:19:33 Number of iterations: 500, loss: 0.00066, lr: 0.001
+2025-03-16 12:20:32 Epoch 41/300 (lr=0.001), train loss 0.00159
+2025-03-16 12:21:56 Number of iterations: 500, loss: 0.00039, lr: 0.001
+2025-03-16 12:22:54 Epoch 42/300 (lr=0.001), train loss 0.00135
+2025-03-16 12:24:19 Number of iterations: 500, loss: 0.00192, lr: 0.001
+2025-03-16 12:25:17 Epoch 43/300 (lr=0.001), train loss 0.00150
+2025-03-16 12:26:42 Number of iterations: 500, loss: 0.00050, lr: 0.001
+2025-03-16 12:27:40 Epoch 44/300 (lr=0.001), train loss 0.00152
+2025-03-16 12:29:04 Number of iterations: 500, loss: 0.00042, lr: 0.001
+2025-03-16 12:30:02 Epoch 45/300 (lr=0.001), train loss 0.00140
+2025-03-16 12:31:27 Number of iterations: 500, loss: 0.00137, lr: 0.001
+2025-03-16 12:32:26 Epoch 46/300 (lr=0.001), train loss 0.00132
+2025-03-16 12:33:51 Number of iterations: 500, loss: 0.00151, lr: 0.001
+2025-03-16 12:34:49 Epoch 47/300 (lr=0.001), train loss 0.00144
+2025-03-16 12:36:13 Number of iterations: 500, loss: 0.00192, lr: 0.001
+2025-03-16 12:37:12 Epoch 48/300 (lr=0.001), train loss 0.00134
+2025-03-16 12:38:36 Number of iterations: 500, loss: 0.00054, lr: 0.001
+2025-03-16 12:39:35 Epoch 49/300 (lr=0.001), train loss 0.00145
+2025-03-16 12:40:59 Number of iterations: 500, loss: 0.00032, lr: 0.001
+2025-03-16 12:41:57 Training for epoch 50 done, starting evaluation
+2025-03-16 12:42:00 Epoch 50/300 (lr=0.001), train loss 0.00133, valid loss 0.00419
+2025-03-16 12:42:00 Model performance:
+2025-03-16 12:42:00   metrics/test.rmse:           6.60
+2025-03-16 12:42:00   metrics/test.rmse_pcutoff:   4.39
+2025-03-16 12:42:00   metrics/test.mAP:           46.93
+2025-03-16 12:42:00   metrics/test.mAR:           50.68
+2025-03-16 12:43:24 Number of iterations: 500, loss: 0.00143, lr: 0.001
+2025-03-16 12:44:23 Epoch 51/300 (lr=0.001), train loss 0.00134
+2025-03-16 12:45:47 Number of iterations: 500, loss: 0.00033, lr: 0.001
+2025-03-16 12:46:45 Epoch 52/300 (lr=0.001), train loss 0.00140
+2025-03-16 12:48:11 Number of iterations: 500, loss: 0.00030, lr: 0.001
+2025-03-16 12:49:09 Epoch 53/300 (lr=0.001), train loss 0.00142
+2025-03-16 12:50:36 Number of iterations: 500, loss: 0.00060, lr: 0.001
+2025-03-16 12:51:37 Epoch 54/300 (lr=0.001), train loss 0.00127
+2025-03-16 12:53:07 Number of iterations: 500, loss: 0.00087, lr: 0.001
+2025-03-16 12:54:09 Epoch 55/300 (lr=0.001), train loss 0.00121
+2025-03-16 12:55:39 Number of iterations: 500, loss: 0.00045, lr: 0.001
+2025-03-16 12:56:41 Epoch 56/300 (lr=0.001), train loss 0.00127
+2025-03-16 12:58:11 Number of iterations: 500, loss: 0.00142, lr: 0.001
+2025-03-16 12:59:13 Epoch 57/300 (lr=0.001), train loss 0.00135
+2025-03-16 13:00:44 Number of iterations: 500, loss: 0.00096, lr: 0.001
+2025-03-16 13:01:46 Epoch 58/300 (lr=0.001), train loss 0.00130
+2025-03-16 13:03:16 Number of iterations: 500, loss: 0.00186, lr: 0.001
+2025-03-16 13:04:18 Epoch 59/300 (lr=0.001), train loss 0.00124
+2025-03-16 13:05:48 Number of iterations: 500, loss: 0.00054, lr: 0.001
+2025-03-16 13:06:50 Training for epoch 60 done, starting evaluation
+2025-03-16 13:06:52 Epoch 60/300 (lr=0.001), train loss 0.00122, valid loss 0.00470
+2025-03-16 13:06:52 Model performance:
+2025-03-16 13:06:52   metrics/test.rmse:           8.07
+2025-03-16 13:06:52   metrics/test.rmse_pcutoff:   3.97
+2025-03-16 13:06:52   metrics/test.mAP:           46.71
+2025-03-16 13:06:52   metrics/test.mAR:           51.59
+2025-03-16 13:08:22 Number of iterations: 500, loss: 0.00171, lr: 0.001
+2025-03-16 13:09:24 Epoch 61/300 (lr=0.001), train loss 0.00136
+2025-03-16 13:10:54 Number of iterations: 500, loss: 0.00020, lr: 0.001
+2025-03-16 13:11:56 Epoch 62/300 (lr=0.001), train loss 0.00116
+2025-03-16 13:13:26 Number of iterations: 500, loss: 0.00121, lr: 0.001
+2025-03-16 13:14:28 Epoch 63/300 (lr=0.001), train loss 0.00117
+2025-03-16 13:15:58 Number of iterations: 500, loss: 0.00024, lr: 0.001
+2025-03-16 13:17:00 Epoch 64/300 (lr=0.001), train loss 0.00119
+2025-03-16 13:18:30 Number of iterations: 500, loss: 0.00241, lr: 0.001
+2025-03-16 13:19:32 Epoch 65/300 (lr=0.001), train loss 0.00123
+2025-03-16 13:21:02 Number of iterations: 500, loss: 0.00039, lr: 0.001
+2025-03-16 13:22:04 Epoch 66/300 (lr=0.001), train loss 0.00118
+2025-03-16 13:23:35 Number of iterations: 500, loss: 0.00036, lr: 0.001
+2025-03-16 13:24:37 Epoch 67/300 (lr=0.001), train loss 0.00122
+2025-03-16 13:26:07 Number of iterations: 500, loss: 0.00205, lr: 0.001
+2025-03-16 13:27:10 Epoch 68/300 (lr=0.001), train loss 0.00117
+2025-03-16 13:28:40 Number of iterations: 500, loss: 0.00146, lr: 0.001
+2025-03-16 13:29:42 Epoch 69/300 (lr=0.001), train loss 0.00112
+2025-03-16 13:31:11 Number of iterations: 500, loss: 0.00238, lr: 0.001
+2025-03-16 13:32:13 Training for epoch 70 done, starting evaluation
+2025-03-16 13:32:15 Epoch 70/300 (lr=0.001), train loss 0.00121, valid loss 0.00535
+2025-03-16 13:32:15 Model performance:
+2025-03-16 13:32:15   metrics/test.rmse:          17.32
+2025-03-16 13:32:15   metrics/test.rmse_pcutoff:   3.88
+2025-03-16 13:32:15   metrics/test.mAP:           48.12
+2025-03-16 13:32:15   metrics/test.mAR:           50.45
+2025-03-16 13:33:45 Number of iterations: 500, loss: 0.00142, lr: 0.001
+2025-03-16 13:34:48 Epoch 71/300 (lr=0.001), train loss 0.00124
+2025-03-16 13:36:18 Number of iterations: 500, loss: 0.00080, lr: 0.001
+2025-03-16 13:37:20 Epoch 72/300 (lr=0.001), train loss 0.00110
+2025-03-16 13:38:50 Number of iterations: 500, loss: 0.00075, lr: 0.001
+2025-03-16 13:39:52 Epoch 73/300 (lr=0.001), train loss 0.00109
+2025-03-16 13:41:18 Number of iterations: 500, loss: 0.00187, lr: 0.001
+2025-03-16 13:42:18 Epoch 74/300 (lr=0.001), train loss 0.00123
+2025-03-16 13:43:43 Number of iterations: 500, loss: 0.00015, lr: 0.001
+2025-03-16 13:44:43 Epoch 75/300 (lr=0.001), train loss 0.00115
+2025-03-16 13:46:08 Number of iterations: 500, loss: 0.00075, lr: 0.001
+2025-03-16 13:47:08 Epoch 76/300 (lr=0.001), train loss 0.00108
+2025-03-16 13:48:36 Number of iterations: 500, loss: 0.00175, lr: 0.001
+2025-03-16 13:49:35 Epoch 77/300 (lr=0.001), train loss 0.00111
+2025-03-16 13:51:01 Number of iterations: 500, loss: 0.00238, lr: 0.001
+2025-03-16 13:51:59 Epoch 78/300 (lr=0.001), train loss 0.00111
+2025-03-16 13:53:25 Number of iterations: 500, loss: 0.00144, lr: 0.001
+2025-03-16 13:54:24 Epoch 79/300 (lr=0.001), train loss 0.00107
+2025-03-16 13:55:50 Number of iterations: 500, loss: 0.00022, lr: 0.001
+2025-03-16 13:56:49 Training for epoch 80 done, starting evaluation
+2025-03-16 13:56:51 Epoch 80/300 (lr=0.001), train loss 0.00106, valid loss 0.00442
+2025-03-16 13:56:51 Model performance:
+2025-03-16 13:56:51   metrics/test.rmse:           6.10
+2025-03-16 13:56:51   metrics/test.rmse_pcutoff:   3.95
+2025-03-16 13:56:51   metrics/test.mAP:           46.01
+2025-03-16 13:56:51   metrics/test.mAR:           48.86
+2025-03-16 13:58:16 Number of iterations: 500, loss: 0.00023, lr: 0.001
+2025-03-16 13:59:15 Epoch 81/300 (lr=0.001), train loss 0.00103
+2025-03-16 14:00:41 Number of iterations: 500, loss: 0.00139, lr: 0.001
+2025-03-16 14:01:40 Epoch 82/300 (lr=0.001), train loss 0.00110
+2025-03-16 14:03:06 Number of iterations: 500, loss: 0.00017, lr: 0.001
+2025-03-16 14:04:05 Epoch 83/300 (lr=0.001), train loss 0.00104
+2025-03-16 14:05:30 Number of iterations: 500, loss: 0.00126, lr: 0.001
+2025-03-16 14:06:29 Epoch 84/300 (lr=0.001), train loss 0.00103
+2025-03-16 14:07:54 Number of iterations: 500, loss: 0.00017, lr: 0.001
+2025-03-16 14:08:52 Epoch 85/300 (lr=0.001), train loss 0.00099
+2025-03-16 14:10:17 Number of iterations: 500, loss: 0.00041, lr: 0.001
+2025-03-16 14:11:16 Epoch 86/300 (lr=0.001), train loss 0.00107
+2025-03-16 14:12:41 Number of iterations: 500, loss: 0.00069, lr: 0.001
+2025-03-16 14:13:40 Epoch 87/300 (lr=0.001), train loss 0.00107
+2025-03-16 14:15:05 Number of iterations: 500, loss: 0.00021, lr: 0.001
+2025-03-16 14:16:04 Epoch 88/300 (lr=0.001), train loss 0.00111
+2025-03-16 14:17:31 Number of iterations: 500, loss: 0.00097, lr: 0.001
+2025-03-16 14:18:30 Epoch 89/300 (lr=0.001), train loss 0.00101
+2025-03-16 14:19:55 Number of iterations: 500, loss: 0.00675, lr: 0.001
+2025-03-16 14:20:53 Training for epoch 90 done, starting evaluation
+2025-03-16 14:20:55 Epoch 90/300 (lr=0.0001), train loss 0.00101, valid loss 0.00471
+2025-03-16 14:20:55 Model performance:
+2025-03-16 14:20:55   metrics/test.rmse:          12.02
+2025-03-16 14:20:55   metrics/test.rmse_pcutoff:   5.54
+2025-03-16 14:20:55   metrics/test.mAP:           47.03
+2025-03-16 14:20:55   metrics/test.mAR:           50.45
+2025-03-16 14:22:21 Number of iterations: 500, loss: 0.00024, lr: 0.0001
+2025-03-16 14:23:19 Epoch 91/300 (lr=0.0001), train loss 0.00076
+2025-03-16 14:24:44 Number of iterations: 500, loss: 0.00115, lr: 0.0001
+2025-03-16 14:25:43 Epoch 92/300 (lr=0.0001), train loss 0.00070
+2025-03-16 14:27:08 Number of iterations: 500, loss: 0.00118, lr: 0.0001
+2025-03-16 14:28:07 Epoch 93/300 (lr=0.0001), train loss 0.00065
+2025-03-16 14:29:32 Number of iterations: 500, loss: 0.00008, lr: 0.0001
+2025-03-16 14:30:31 Epoch 94/300 (lr=0.0001), train loss 0.00065
+2025-03-16 14:31:56 Number of iterations: 500, loss: 0.00054, lr: 0.0001
+2025-03-16 14:32:54 Epoch 95/300 (lr=0.0001), train loss 0.00067
+2025-03-16 14:34:20 Number of iterations: 500, loss: 0.00051, lr: 0.0001
+2025-03-16 14:35:18 Epoch 96/300 (lr=0.0001), train loss 0.00060
+2025-03-16 14:36:43 Number of iterations: 500, loss: 0.00024, lr: 0.0001
+2025-03-16 14:37:42 Epoch 97/300 (lr=0.0001), train loss 0.00060
+2025-03-16 14:39:07 Number of iterations: 500, loss: 0.00004, lr: 0.0001
+2025-03-16 14:40:05 Epoch 98/300 (lr=0.0001), train loss 0.00062
+2025-03-16 14:41:31 Number of iterations: 500, loss: 0.00065, lr: 0.0001
+2025-03-16 14:42:29 Epoch 99/300 (lr=0.0001), train loss 0.00060
+2025-03-16 14:43:54 Number of iterations: 500, loss: 0.00113, lr: 0.0001
+2025-03-16 14:44:53 Training for epoch 100 done, starting evaluation
+2025-03-16 14:44:55 Epoch 100/300 (lr=0.0001), train loss 0.00058, valid loss 0.00416
+2025-03-16 14:44:55 Model performance:
+2025-03-16 14:44:55   metrics/test.rmse:           5.77
+2025-03-16 14:44:55   metrics/test.rmse_pcutoff:   3.54
+2025-03-16 14:44:55   metrics/test.mAP:           51.68
+2025-03-16 14:44:55   metrics/test.mAR:           54.55
+2025-03-16 14:46:20 Number of iterations: 500, loss: 0.00010, lr: 0.0001
+2025-03-16 14:47:18 Epoch 101/300 (lr=0.0001), train loss 0.00059
+2025-03-16 14:48:44 Number of iterations: 500, loss: 0.00053, lr: 0.0001
+2025-03-16 14:49:42 Epoch 102/300 (lr=0.0001), train loss 0.00056
+2025-03-16 14:51:07 Number of iterations: 500, loss: 0.00010, lr: 0.0001
+2025-03-16 14:52:06 Epoch 103/300 (lr=0.0001), train loss 0.00054
+2025-03-16 14:53:31 Number of iterations: 500, loss: 0.00086, lr: 0.0001
+2025-03-16 14:54:29 Epoch 104/300 (lr=0.0001), train loss 0.00058
+2025-03-16 14:55:54 Number of iterations: 500, loss: 0.00007, lr: 0.0001
+2025-03-16 14:56:53 Epoch 105/300 (lr=0.0001), train loss 0.00057
+2025-03-16 14:58:17 Number of iterations: 500, loss: 0.00011, lr: 0.0001
+2025-03-16 14:59:16 Epoch 106/300 (lr=0.0001), train loss 0.00056
+2025-03-16 15:00:41 Number of iterations: 500, loss: 0.00059, lr: 0.0001
+2025-03-16 15:01:40 Epoch 107/300 (lr=0.0001), train loss 0.00055
+2025-03-16 15:03:05 Number of iterations: 500, loss: 0.00018, lr: 0.0001
+2025-03-16 15:04:03 Epoch 108/300 (lr=0.0001), train loss 0.00057
+2025-03-16 15:05:28 Number of iterations: 500, loss: 0.00057, lr: 0.0001
+2025-03-16 15:06:26 Epoch 109/300 (lr=0.0001), train loss 0.00054
+2025-03-16 15:07:51 Number of iterations: 500, loss: 0.00050, lr: 0.0001
+2025-03-16 15:08:50 Training for epoch 110 done, starting evaluation
+2025-03-16 15:08:52 Epoch 110/300 (lr=0.0001), train loss 0.00051, valid loss 0.00424
+2025-03-16 15:08:52 Model performance:
+2025-03-16 15:08:52   metrics/test.rmse:           6.68
+2025-03-16 15:08:52   metrics/test.rmse_pcutoff:   3.38
+2025-03-16 15:08:52   metrics/test.mAP:           52.34
+2025-03-16 15:08:52   metrics/test.mAR:           54.77
+2025-03-16 15:10:17 Number of iterations: 500, loss: 0.00115, lr: 0.0001
+2025-03-16 15:11:16 Epoch 111/300 (lr=0.0001), train loss 0.00054
+2025-03-16 15:12:40 Number of iterations: 500, loss: 0.00119, lr: 0.0001
+2025-03-16 15:13:39 Epoch 112/300 (lr=0.0001), train loss 0.00054
+2025-03-16 15:15:04 Number of iterations: 500, loss: 0.00042, lr: 0.0001
+2025-03-16 15:16:02 Epoch 113/300 (lr=0.0001), train loss 0.00053
+2025-03-16 15:17:28 Number of iterations: 500, loss: 0.00005, lr: 0.0001
+2025-03-16 15:18:26 Epoch 114/300 (lr=0.0001), train loss 0.00057
+2025-03-16 15:19:52 Number of iterations: 500, loss: 0.00016, lr: 0.0001
+2025-03-16 15:20:50 Epoch 115/300 (lr=0.0001), train loss 0.00054
+2025-03-16 15:22:15 Number of iterations: 500, loss: 0.00130, lr: 0.0001
+2025-03-16 15:23:14 Epoch 116/300 (lr=0.0001), train loss 0.00051
+2025-03-16 15:24:39 Number of iterations: 500, loss: 0.00078, lr: 0.0001
+2025-03-16 15:25:37 Epoch 117/300 (lr=0.0001), train loss 0.00050
+2025-03-16 15:27:02 Number of iterations: 500, loss: 0.00061, lr: 0.0001
+2025-03-16 15:28:01 Epoch 118/300 (lr=0.0001), train loss 0.00052
+2025-03-16 15:29:26 Number of iterations: 500, loss: 0.00009, lr: 0.0001
+2025-03-16 15:30:25 Epoch 119/300 (lr=0.0001), train loss 0.00048
+2025-03-16 15:31:50 Number of iterations: 500, loss: 0.00015, lr: 0.0001
+2025-03-16 15:32:49 Training for epoch 120 done, starting evaluation
+2025-03-16 15:32:51 Epoch 120/300 (lr=1e-05), train loss 0.00051, valid loss 0.00439
+2025-03-16 15:32:51 Model performance:
+2025-03-16 15:32:51   metrics/test.rmse:           5.92
+2025-03-16 15:32:51   metrics/test.rmse_pcutoff:   3.40
+2025-03-16 15:32:51   metrics/test.mAP:           52.52
+2025-03-16 15:32:51   metrics/test.mAR:           55.00
+2025-03-16 15:34:16 Number of iterations: 500, loss: 0.00040, lr: 1e-05
+2025-03-16 15:35:14 Epoch 121/300 (lr=1e-05), train loss 0.00049
+2025-03-16 15:36:40 Number of iterations: 500, loss: 0.00022, lr: 1e-05
+2025-03-16 15:37:38 Epoch 122/300 (lr=1e-05), train loss 0.00053
+2025-03-16 15:39:03 Number of iterations: 500, loss: 0.00033, lr: 1e-05
+2025-03-16 15:40:02 Epoch 123/300 (lr=1e-05), train loss 0.00048
+2025-03-16 15:41:27 Number of iterations: 500, loss: 0.00045, lr: 1e-05
+2025-03-16 15:42:26 Epoch 124/300 (lr=1e-05), train loss 0.00048
+2025-03-16 15:43:51 Number of iterations: 500, loss: 0.00026, lr: 1e-05
+2025-03-16 15:44:50 Epoch 125/300 (lr=1e-05), train loss 0.00046
+2025-03-16 15:46:15 Number of iterations: 500, loss: 0.00082, lr: 1e-05
+2025-03-16 15:47:14 Epoch 126/300 (lr=1e-05), train loss 0.00045
+2025-03-16 15:48:39 Number of iterations: 500, loss: 0.00111, lr: 1e-05
+2025-03-16 15:49:37 Epoch 127/300 (lr=1e-05), train loss 0.00045
+2025-03-16 15:51:02 Number of iterations: 500, loss: 0.00028, lr: 1e-05
+2025-03-16 15:52:01 Epoch 128/300 (lr=1e-05), train loss 0.00049
+2025-03-16 15:53:26 Number of iterations: 500, loss: 0.00010, lr: 1e-05
+2025-03-16 15:54:24 Epoch 129/300 (lr=1e-05), train loss 0.00050
+2025-03-16 15:55:49 Number of iterations: 500, loss: 0.00015, lr: 1e-05
+2025-03-16 15:56:48 Training for epoch 130 done, starting evaluation
+2025-03-16 15:56:50 Epoch 130/300 (lr=1e-05), train loss 0.00048, valid loss 0.00438
+2025-03-16 15:56:50 Model performance:
+2025-03-16 15:56:50   metrics/test.rmse:           6.61
+2025-03-16 15:56:50   metrics/test.rmse_pcutoff:   3.37
+2025-03-16 15:56:50   metrics/test.mAP:           52.89
+2025-03-16 15:56:50   metrics/test.mAR:           55.23
+2025-03-16 15:58:15 Number of iterations: 500, loss: 0.00006, lr: 1e-05
+2025-03-16 15:59:13 Epoch 131/300 (lr=1e-05), train loss 0.00047
+2025-03-16 16:00:38 Number of iterations: 500, loss: 0.00056, lr: 1e-05
+2025-03-16 16:01:37 Epoch 132/300 (lr=1e-05), train loss 0.00047
+2025-03-16 16:03:02 Number of iterations: 500, loss: 0.00019, lr: 1e-05
+2025-03-16 16:04:00 Epoch 133/300 (lr=1e-05), train loss 0.00048
+2025-03-16 16:05:25 Number of iterations: 500, loss: 0.00005, lr: 1e-05
+2025-03-16 16:06:24 Epoch 134/300 (lr=1e-05), train loss 0.00047
+2025-03-16 16:07:49 Number of iterations: 500, loss: 0.00004, lr: 1e-05
+2025-03-16 16:08:48 Epoch 135/300 (lr=1e-05), train loss 0.00046
+2025-03-16 16:10:13 Number of iterations: 500, loss: 0.00040, lr: 1e-05
+2025-03-16 16:11:12 Epoch 136/300 (lr=1e-05), train loss 0.00047
+2025-03-16 16:12:38 Number of iterations: 500, loss: 0.00042, lr: 1e-05
+2025-03-16 16:13:36 Epoch 137/300 (lr=1e-05), train loss 0.00045
+2025-03-16 16:15:02 Number of iterations: 500, loss: 0.00068, lr: 1e-05
+2025-03-16 16:16:01 Epoch 138/300 (lr=1e-05), train loss 0.00046
+2025-03-16 16:17:27 Number of iterations: 500, loss: 0.00008, lr: 1e-05
+2025-03-16 16:18:26 Epoch 139/300 (lr=1e-05), train loss 0.00046
+2025-03-16 16:19:51 Number of iterations: 500, loss: 0.00004, lr: 1e-05
+2025-03-16 16:20:50 Training for epoch 140 done, starting evaluation
+2025-03-16 16:20:52 Epoch 140/300 (lr=1e-05), train loss 0.00046, valid loss 0.00430
+2025-03-16 16:20:52 Model performance:
+2025-03-16 16:20:52   metrics/test.rmse:           5.88
+2025-03-16 16:20:52   metrics/test.rmse_pcutoff:   3.34
+2025-03-16 16:20:52   metrics/test.mAP:           52.98
+2025-03-16 16:20:52   metrics/test.mAR:           55.45
+2025-03-16 16:22:18 Number of iterations: 500, loss: 0.00086, lr: 1e-05
+2025-03-16 16:23:17 Epoch 141/300 (lr=1e-05), train loss 0.00046
+2025-03-16 16:24:42 Number of iterations: 500, loss: 0.00007, lr: 1e-05
+2025-03-16 16:25:41 Epoch 142/300 (lr=1e-05), train loss 0.00047
+2025-03-16 16:27:06 Number of iterations: 500, loss: 0.00015, lr: 1e-05
+2025-03-16 16:28:05 Epoch 143/300 (lr=1e-05), train loss 0.00045
+2025-03-16 16:29:30 Number of iterations: 500, loss: 0.00172, lr: 1e-05
+2025-03-16 16:30:28 Epoch 144/300 (lr=1e-05), train loss 0.00047
+2025-03-16 16:31:54 Number of iterations: 500, loss: 0.00043, lr: 1e-05
+2025-03-16 16:32:52 Epoch 145/300 (lr=1e-05), train loss 0.00045
+2025-03-16 16:34:18 Number of iterations: 500, loss: 0.00008, lr: 1e-05
+2025-03-16 16:35:16 Epoch 146/300 (lr=1e-05), train loss 0.00048
+2025-03-16 16:36:42 Number of iterations: 500, loss: 0.00031, lr: 1e-05
+2025-03-16 16:37:41 Epoch 147/300 (lr=1e-05), train loss 0.00046
+2025-03-16 16:39:07 Number of iterations: 500, loss: 0.00062, lr: 1e-05
+2025-03-16 16:40:05 Epoch 148/300 (lr=1e-05), train loss 0.00046
+2025-03-16 16:41:30 Number of iterations: 500, loss: 0.00013, lr: 1e-05
+2025-03-16 16:42:29 Epoch 149/300 (lr=1e-05), train loss 0.00045
+2025-03-16 16:43:55 Number of iterations: 500, loss: 0.00009, lr: 1e-05
+2025-03-16 16:44:54 Training for epoch 150 done, starting evaluation
+2025-03-16 16:44:56 Epoch 150/300 (lr=1e-05), train loss 0.00049, valid loss 0.00430
+2025-03-16 16:44:56 Model performance:
+2025-03-16 16:44:56   metrics/test.rmse:           5.70
+2025-03-16 16:44:56   metrics/test.rmse_pcutoff:   3.37
+2025-03-16 16:44:56   metrics/test.mAP:           52.68
+2025-03-16 16:44:56   metrics/test.mAR:           55.23
+2025-03-16 16:46:21 Number of iterations: 500, loss: 0.00014, lr: 1e-05
+2025-03-16 16:47:20 Epoch 151/300 (lr=1e-05), train loss 0.00049
+2025-03-16 16:48:45 Number of iterations: 500, loss: 0.00003, lr: 1e-05
+2025-03-16 16:49:44 Epoch 152/300 (lr=1e-05), train loss 0.00049
+2025-03-16 16:51:09 Number of iterations: 500, loss: 0.00112, lr: 1e-05
+2025-03-16 16:52:08 Epoch 153/300 (lr=1e-05), train loss 0.00045
+2025-03-16 16:53:34 Number of iterations: 500, loss: 0.00013, lr: 1e-05
+2025-03-16 16:54:33 Epoch 154/300 (lr=1e-05), train loss 0.00048
+2025-03-16 16:56:00 Number of iterations: 500, loss: 0.00016, lr: 1e-05
+2025-03-16 16:56:58 Epoch 155/300 (lr=1e-05), train loss 0.00046
+2025-03-16 16:58:24 Number of iterations: 500, loss: 0.00009, lr: 1e-05
+2025-03-16 16:59:23 Epoch 156/300 (lr=1e-05), train loss 0.00046
+2025-03-16 17:00:49 Number of iterations: 500, loss: 0.00054, lr: 1e-05
+2025-03-16 17:01:48 Epoch 157/300 (lr=1e-05), train loss 0.00047
+2025-03-16 17:03:14 Number of iterations: 500, loss: 0.00069, lr: 1e-05
+2025-03-16 17:04:13 Epoch 158/300 (lr=1e-05), train loss 0.00046
+2025-03-16 17:05:39 Number of iterations: 500, loss: 0.00170, lr: 1e-05
+2025-03-16 17:06:37 Epoch 159/300 (lr=1e-05), train loss 0.00046
+2025-03-16 17:08:04 Number of iterations: 500, loss: 0.00084, lr: 1e-05
+2025-03-16 17:09:03 Training for epoch 160 done, starting evaluation
+2025-03-16 17:09:05 Epoch 160/300 (lr=1e-05), train loss 0.00047, valid loss 0.00425
+2025-03-16 17:09:05 Model performance:
+2025-03-16 17:09:05   metrics/test.rmse:           5.49
+2025-03-16 17:09:05   metrics/test.rmse_pcutoff:   3.35
+2025-03-16 17:09:05   metrics/test.mAP:           52.86
+2025-03-16 17:09:05   metrics/test.mAR:           55.45
+2025-03-16 17:10:31 Number of iterations: 500, loss: 0.00040, lr: 1e-05
+2025-03-16 17:11:30 Epoch 161/300 (lr=1e-05), train loss 0.00044
+2025-03-16 17:12:56 Number of iterations: 500, loss: 0.00009, lr: 1e-05
+2025-03-16 17:13:55 Epoch 162/300 (lr=1e-05), train loss 0.00046
+2025-03-16 17:15:21 Number of iterations: 500, loss: 0.00035, lr: 1e-05
+2025-03-16 17:16:20 Epoch 163/300 (lr=1e-05), train loss 0.00045
+2025-03-16 17:17:46 Number of iterations: 500, loss: 0.00035, lr: 1e-05
+2025-03-16 17:18:46 Epoch 164/300 (lr=1e-05), train loss 0.00046
+2025-03-16 17:20:12 Number of iterations: 500, loss: 0.00050, lr: 1e-05
+2025-03-16 17:21:11 Epoch 165/300 (lr=1e-05), train loss 0.00047
+2025-03-16 17:22:37 Number of iterations: 500, loss: 0.00024, lr: 1e-05
+2025-03-16 17:23:37 Epoch 166/300 (lr=1e-05), train loss 0.00045
+2025-03-16 17:25:02 Number of iterations: 500, loss: 0.00060, lr: 1e-05
+2025-03-16 17:26:01 Epoch 167/300 (lr=1e-05), train loss 0.00047
+2025-03-16 17:27:26 Number of iterations: 500, loss: 0.00059, lr: 1e-05
+2025-03-16 17:28:25 Epoch 168/300 (lr=1e-05), train loss 0.00048
+2025-03-16 17:29:51 Number of iterations: 500, loss: 0.00178, lr: 1e-05
+2025-03-16 17:30:49 Epoch 169/300 (lr=1e-05), train loss 0.00045
+2025-03-16 17:32:15 Number of iterations: 500, loss: 0.00032, lr: 1e-05
+2025-03-16 17:33:14 Training for epoch 170 done, starting evaluation
+2025-03-16 17:33:16 Epoch 170/300 (lr=1e-05), train loss 0.00043, valid loss 0.00425
+2025-03-16 17:33:16 Model performance:
+2025-03-16 17:33:16   metrics/test.rmse:           5.78
+2025-03-16 17:33:16   metrics/test.rmse_pcutoff:   3.35
+2025-03-16 17:33:16   metrics/test.mAP:           53.01
+2025-03-16 17:33:16   metrics/test.mAR:           55.45
+2025-03-16 17:34:41 Number of iterations: 500, loss: 0.00062, lr: 1e-05
+2025-03-16 17:35:40 Epoch 171/300 (lr=1e-05), train loss 0.00044
+2025-03-16 17:37:06 Number of iterations: 500, loss: 0.00041, lr: 1e-05
+2025-03-16 17:38:05 Epoch 172/300 (lr=1e-05), train loss 0.00048
+2025-03-16 17:39:30 Number of iterations: 500, loss: 0.00034, lr: 1e-05
+2025-03-16 17:40:29 Epoch 173/300 (lr=1e-05), train loss 0.00045
+2025-03-16 17:41:55 Number of iterations: 500, loss: 0.00062, lr: 1e-05
+2025-03-16 17:42:54 Epoch 174/300 (lr=1e-05), train loss 0.00045
+2025-03-16 17:44:20 Number of iterations: 500, loss: 0.00111, lr: 1e-05
+2025-03-16 17:45:18 Epoch 175/300 (lr=1e-05), train loss 0.00045
+2025-03-16 17:46:44 Number of iterations: 500, loss: 0.00009, lr: 1e-05
+2025-03-16 17:47:43 Epoch 176/300 (lr=1e-05), train loss 0.00045
+2025-03-16 17:49:08 Number of iterations: 500, loss: 0.00019, lr: 1e-05
+2025-03-16 17:50:07 Epoch 177/300 (lr=1e-05), train loss 0.00050
+2025-03-16 17:51:33 Number of iterations: 500, loss: 0.00043, lr: 1e-05
+2025-03-16 17:52:33 Epoch 178/300 (lr=1e-05), train loss 0.00044
+2025-03-16 17:53:58 Number of iterations: 500, loss: 0.00012, lr: 1e-05
+2025-03-16 17:54:57 Epoch 179/300 (lr=1e-05), train loss 0.00043
+2025-03-16 17:56:23 Number of iterations: 500, loss: 0.00006, lr: 1e-05
+2025-03-16 17:57:21 Training for epoch 180 done, starting evaluation
+2025-03-16 17:57:23 Epoch 180/300 (lr=1e-05), train loss 0.00046, valid loss 0.00426
+2025-03-16 17:57:23 Model performance:
+2025-03-16 17:57:23   metrics/test.rmse:           6.04
+2025-03-16 17:57:23   metrics/test.rmse_pcutoff:   3.35
+2025-03-16 17:57:23   metrics/test.mAP:           52.75
+2025-03-16 17:57:23   metrics/test.mAR:           55.23
+2025-03-16 17:58:49 Number of iterations: 500, loss: 0.00026, lr: 1e-05
+2025-03-16 17:59:48 Epoch 181/300 (lr=1e-05), train loss 0.00044
+2025-03-16 18:01:13 Number of iterations: 500, loss: 0.00085, lr: 1e-05
+2025-03-16 18:02:12 Epoch 182/300 (lr=1e-05), train loss 0.00045
+2025-03-16 18:03:39 Number of iterations: 500, loss: 0.00015, lr: 1e-05
+2025-03-16 18:04:37 Epoch 183/300 (lr=1e-05), train loss 0.00043
+2025-03-16 18:06:03 Number of iterations: 500, loss: 0.00122, lr: 1e-05
+2025-03-16 18:07:02 Epoch 184/300 (lr=1e-05), train loss 0.00044
+2025-03-16 18:08:27 Number of iterations: 500, loss: 0.00010, lr: 1e-05
+2025-03-16 18:09:26 Epoch 185/300 (lr=1e-05), train loss 0.00044
+2025-03-16 18:10:52 Number of iterations: 500, loss: 0.00012, lr: 1e-05
+2025-03-16 18:11:51 Epoch 186/300 (lr=1e-05), train loss 0.00045
+2025-03-16 18:13:17 Number of iterations: 500, loss: 0.00006, lr: 1e-05
+2025-03-16 18:14:16 Epoch 187/300 (lr=1e-05), train loss 0.00045
+2025-03-16 18:15:42 Number of iterations: 500, loss: 0.00067, lr: 1e-05
+2025-03-16 18:16:41 Epoch 188/300 (lr=1e-05), train loss 0.00044
+2025-03-16 18:18:07 Number of iterations: 500, loss: 0.00012, lr: 1e-05
+2025-03-16 18:19:06 Epoch 189/300 (lr=1e-05), train loss 0.00047
+2025-03-16 18:20:32 Number of iterations: 500, loss: 0.00022, lr: 1e-05
+2025-03-16 18:21:30 Training for epoch 190 done, starting evaluation
+2025-03-16 18:21:32 Epoch 190/300 (lr=1e-05), train loss 0.00046, valid loss 0.00427
+2025-03-16 18:21:32 Model performance:
+2025-03-16 18:21:32   metrics/test.rmse:           5.99
+2025-03-16 18:21:32   metrics/test.rmse_pcutoff:   3.36
+2025-03-16 18:21:32   metrics/test.mAP:           53.05
+2025-03-16 18:21:32   metrics/test.mAR:           55.45
+2025-03-16 18:22:58 Number of iterations: 500, loss: 0.00028, lr: 1e-05
+2025-03-16 18:23:57 Epoch 191/300 (lr=1e-05), train loss 0.00045
+2025-03-16 18:25:22 Number of iterations: 500, loss: 0.00030, lr: 1e-05
+2025-03-16 18:26:21 Epoch 192/300 (lr=1e-05), train loss 0.00043
+2025-03-16 18:27:46 Number of iterations: 500, loss: 0.00108, lr: 1e-05
+2025-03-16 18:28:45 Epoch 193/300 (lr=1e-05), train loss 0.00045
+2025-03-16 18:30:10 Number of iterations: 500, loss: 0.00130, lr: 1e-05
+2025-03-16 18:31:09 Epoch 194/300 (lr=1e-05), train loss 0.00045
+2025-03-16 18:32:34 Number of iterations: 500, loss: 0.00011, lr: 1e-05
+2025-03-16 18:33:33 Epoch 195/300 (lr=1e-05), train loss 0.00044
+2025-03-16 18:34:58 Number of iterations: 500, loss: 0.00034, lr: 1e-05
+2025-03-16 18:35:57 Epoch 196/300 (lr=1e-05), train loss 0.00046
+2025-03-16 18:37:22 Number of iterations: 500, loss: 0.00038, lr: 1e-05
+2025-03-16 18:38:21 Epoch 197/300 (lr=1e-05), train loss 0.00046
+2025-03-16 18:39:47 Number of iterations: 500, loss: 0.00011, lr: 1e-05
+2025-03-16 18:40:46 Epoch 198/300 (lr=1e-05), train loss 0.00046
+2025-03-16 18:42:11 Number of iterations: 500, loss: 0.00011, lr: 1e-05
+2025-03-16 18:43:10 Epoch 199/300 (lr=1e-05), train loss 0.00044
+2025-03-16 18:44:35 Number of iterations: 500, loss: 0.00001, lr: 1e-05
+2025-03-16 18:45:34 Training for epoch 200 done, starting evaluation
+2025-03-16 18:45:36 Epoch 200/300 (lr=1e-05), train loss 0.00046, valid loss 0.00423
+2025-03-16 18:45:36 Model performance:
+2025-03-16 18:45:36   metrics/test.rmse:           6.13
+2025-03-16 18:45:36   metrics/test.rmse_pcutoff:   3.38
+2025-03-16 18:45:36   metrics/test.mAP:           52.80
+2025-03-16 18:45:36   metrics/test.mAR:           55.23
+2025-03-16 18:47:01 Number of iterations: 500, loss: 0.00035, lr: 1e-05
+2025-03-16 18:48:00 Epoch 201/300 (lr=1e-05), train loss 0.00044
+2025-03-16 18:49:25 Number of iterations: 500, loss: 0.00021, lr: 1e-05
+2025-03-16 18:50:24 Epoch 202/300 (lr=1e-05), train loss 0.00043
+2025-03-16 18:51:49 Number of iterations: 500, loss: 0.00036, lr: 1e-05
+2025-03-16 18:52:48 Epoch 203/300 (lr=1e-05), train loss 0.00044
+2025-03-16 18:54:14 Number of iterations: 500, loss: 0.00085, lr: 1e-05
+2025-03-16 18:55:13 Epoch 204/300 (lr=1e-05), train loss 0.00044
+2025-03-16 18:56:38 Number of iterations: 500, loss: 0.00010, lr: 1e-05
+2025-03-16 18:57:37 Epoch 205/300 (lr=1e-05), train loss 0.00043
+2025-03-16 18:59:02 Number of iterations: 500, loss: 0.00006, lr: 1e-05
+2025-03-16 19:00:01 Epoch 206/300 (lr=1e-05), train loss 0.00044
+2025-03-16 19:01:27 Number of iterations: 500, loss: 0.00175, lr: 1e-05
+2025-03-16 19:02:26 Epoch 207/300 (lr=1e-05), train loss 0.00046
+2025-03-16 19:03:51 Number of iterations: 500, loss: 0.00026, lr: 1e-05
+2025-03-16 19:04:50 Epoch 208/300 (lr=1e-05), train loss 0.00044
+2025-03-16 19:06:15 Number of iterations: 500, loss: 0.00006, lr: 1e-05
+2025-03-16 19:07:14 Epoch 209/300 (lr=1e-05), train loss 0.00044
+2025-03-16 19:08:40 Number of iterations: 500, loss: 0.00014, lr: 1e-05
+2025-03-16 19:09:38 Training for epoch 210 done, starting evaluation
+2025-03-16 19:09:40 Epoch 210/300 (lr=1e-05), train loss 0.00049, valid loss 0.00426
+2025-03-16 19:09:40 Model performance:
+2025-03-16 19:09:40   metrics/test.rmse:           5.58
+2025-03-16 19:09:40   metrics/test.rmse_pcutoff:   3.36
+2025-03-16 19:09:40   metrics/test.mAP:           52.95
+2025-03-16 19:09:40   metrics/test.mAR:           55.23
+2025-03-16 19:11:05 Number of iterations: 500, loss: 0.00041, lr: 1e-05
+2025-03-16 19:12:04 Epoch 211/300 (lr=1e-05), train loss 0.00043
+2025-03-16 19:13:29 Number of iterations: 500, loss: 0.00079, lr: 1e-05
+2025-03-16 19:14:28 Epoch 212/300 (lr=1e-05), train loss 0.00044
+2025-03-16 19:15:54 Number of iterations: 500, loss: 0.00078, lr: 1e-05
+2025-03-16 19:16:52 Epoch 213/300 (lr=1e-05), train loss 0.00043
+2025-03-16 19:18:18 Number of iterations: 500, loss: 0.00029, lr: 1e-05
+2025-03-16 19:19:17 Epoch 214/300 (lr=1e-05), train loss 0.00045
+2025-03-16 19:20:42 Number of iterations: 500, loss: 0.00013, lr: 1e-05
+2025-03-16 19:21:40 Epoch 215/300 (lr=1e-05), train loss 0.00045
+2025-03-16 19:23:06 Number of iterations: 500, loss: 0.00009, lr: 1e-05
+2025-03-16 19:24:05 Epoch 216/300 (lr=1e-05), train loss 0.00044
+2025-03-16 19:25:31 Number of iterations: 500, loss: 0.00070, lr: 1e-05
+2025-03-16 19:26:29 Epoch 217/300 (lr=1e-05), train loss 0.00043
+2025-03-16 19:27:54 Number of iterations: 500, loss: 0.00007, lr: 1e-05
+2025-03-16 19:28:53 Epoch 218/300 (lr=1e-05), train loss 0.00044
+2025-03-16 19:30:18 Number of iterations: 500, loss: 0.00056, lr: 1e-05
+2025-03-16 19:31:19 Epoch 219/300 (lr=1e-05), train loss 0.00044
+2025-03-16 19:32:45 Number of iterations: 500, loss: 0.00038, lr: 1e-05
+2025-03-16 19:33:44 Training for epoch 220 done, starting evaluation
+2025-03-16 19:33:46 Epoch 220/300 (lr=1e-05), train loss 0.00045, valid loss 0.00431
+2025-03-16 19:33:46 Model performance:
+2025-03-16 19:33:46   metrics/test.rmse:           6.12
+2025-03-16 19:33:46   metrics/test.rmse_pcutoff:   3.36
+2025-03-16 19:33:46   metrics/test.mAP:           52.92
+2025-03-16 19:33:46   metrics/test.mAR:           55.23
+2025-03-16 19:35:11 Number of iterations: 500, loss: 0.00097, lr: 1e-05
+2025-03-16 19:36:10 Epoch 221/300 (lr=1e-05), train loss 0.00044
+2025-03-16 19:37:36 Number of iterations: 500, loss: 0.00046, lr: 1e-05
+2025-03-16 19:38:35 Epoch 222/300 (lr=1e-05), train loss 0.00044
+2025-03-16 19:40:01 Number of iterations: 500, loss: 0.00044, lr: 1e-05
+2025-03-16 19:40:59 Epoch 223/300 (lr=1e-05), train loss 0.00045
+2025-03-16 19:42:25 Number of iterations: 500, loss: 0.00047, lr: 1e-05
+2025-03-16 19:43:25 Epoch 224/300 (lr=1e-05), train loss 0.00044
+2025-03-16 19:44:50 Number of iterations: 500, loss: 0.00048, lr: 1e-05
+2025-03-16 19:45:49 Epoch 225/300 (lr=1e-05), train loss 0.00042
+2025-03-16 19:47:15 Number of iterations: 500, loss: 0.00007, lr: 1e-05
+2025-03-16 19:48:13 Epoch 226/300 (lr=1e-05), train loss 0.00045
+2025-03-16 19:49:39 Number of iterations: 500, loss: 0.00034, lr: 1e-05
+2025-03-16 19:50:37 Epoch 227/300 (lr=1e-05), train loss 0.00042
+2025-03-16 19:52:03 Number of iterations: 500, loss: 0.00023, lr: 1e-05
+2025-03-16 19:53:01 Epoch 228/300 (lr=1e-05), train loss 0.00043
+2025-03-16 19:54:28 Number of iterations: 500, loss: 0.00010, lr: 1e-05
+2025-03-16 19:55:27 Epoch 229/300 (lr=1e-05), train loss 0.00044
+2025-03-16 19:56:53 Number of iterations: 500, loss: 0.00060, lr: 1e-05
+2025-03-16 19:57:52 Training for epoch 230 done, starting evaluation
+2025-03-16 19:57:54 Epoch 230/300 (lr=1e-05), train loss 0.00041, valid loss 0.00428
+2025-03-16 19:57:54 Model performance:
+2025-03-16 19:57:54   metrics/test.rmse:           6.02
+2025-03-16 19:57:54   metrics/test.rmse_pcutoff:   3.37
+2025-03-16 19:57:54   metrics/test.mAP:           52.96
+2025-03-16 19:57:54   metrics/test.mAR:           55.23
+2025-03-16 19:59:21 Number of iterations: 500, loss: 0.00075, lr: 1e-05
+2025-03-16 20:00:20 Epoch 231/300 (lr=1e-05), train loss 0.00044
+2025-03-16 20:01:46 Number of iterations: 500, loss: 0.00010, lr: 1e-05
+2025-03-16 20:02:45 Epoch 232/300 (lr=1e-05), train loss 0.00043
+2025-03-16 20:04:12 Number of iterations: 500, loss: 0.00035, lr: 1e-05
+2025-03-16 20:05:11 Epoch 233/300 (lr=1e-05), train loss 0.00045
+2025-03-16 20:06:37 Number of iterations: 500, loss: 0.00010, lr: 1e-05
+2025-03-16 20:07:36 Epoch 234/300 (lr=1e-05), train loss 0.00044
+2025-03-16 20:09:03 Number of iterations: 500, loss: 0.00038, lr: 1e-05
+2025-03-16 20:10:02 Epoch 235/300 (lr=1e-05), train loss 0.00045
+2025-03-16 20:11:29 Number of iterations: 500, loss: 0.00103, lr: 1e-05
+2025-03-16 20:12:32 Epoch 236/300 (lr=1e-05), train loss 0.00044
+2025-03-16 20:14:04 Number of iterations: 500, loss: 0.00008, lr: 1e-05
+2025-03-16 20:15:05 Epoch 237/300 (lr=1e-05), train loss 0.00044
+2025-03-16 20:16:31 Number of iterations: 500, loss: 0.00045, lr: 1e-05
+2025-03-16 20:17:30 Epoch 238/300 (lr=1e-05), train loss 0.00044
+2025-03-16 20:18:56 Number of iterations: 500, loss: 0.00132, lr: 1e-05
+2025-03-16 20:19:55 Epoch 239/300 (lr=1e-05), train loss 0.00042
+2025-03-16 20:21:21 Number of iterations: 500, loss: 0.00009, lr: 1e-05
+2025-03-16 20:22:21 Training for epoch 240 done, starting evaluation
+2025-03-16 20:22:23 Epoch 240/300 (lr=1e-05), train loss 0.00045, valid loss 0.00430
+2025-03-16 20:22:23 Model performance:
+2025-03-16 20:22:23   metrics/test.rmse:           6.12
+2025-03-16 20:22:23   metrics/test.rmse_pcutoff:   3.37
+2025-03-16 20:22:23   metrics/test.mAP:           53.08
+2025-03-16 20:22:23   metrics/test.mAR:           55.45
+2025-03-16 20:23:50 Number of iterations: 500, loss: 0.00010, lr: 1e-05
+2025-03-16 20:24:49 Epoch 241/300 (lr=1e-05), train loss 0.00044
+2025-03-16 20:26:15 Number of iterations: 500, loss: 0.00075, lr: 1e-05
+2025-03-16 20:27:14 Epoch 242/300 (lr=1e-05), train loss 0.00044
+2025-03-16 20:28:39 Number of iterations: 500, loss: 0.00010, lr: 1e-05
+2025-03-16 20:29:38 Epoch 243/300 (lr=1e-05), train loss 0.00044
+2025-03-16 20:31:04 Number of iterations: 500, loss: 0.00122, lr: 1e-05
+2025-03-16 20:32:03 Epoch 244/300 (lr=1e-05), train loss 0.00043
+2025-03-16 20:33:28 Number of iterations: 500, loss: 0.00012, lr: 1e-05
+2025-03-16 20:34:27 Epoch 245/300 (lr=1e-05), train loss 0.00043
+2025-03-16 20:35:53 Number of iterations: 500, loss: 0.00029, lr: 1e-05
+2025-03-16 20:36:52 Epoch 246/300 (lr=1e-05), train loss 0.00042
+2025-03-16 20:38:17 Number of iterations: 500, loss: 0.00012, lr: 1e-05
+2025-03-16 20:39:16 Epoch 247/300 (lr=1e-05), train loss 0.00042
+2025-03-16 20:40:40 Number of iterations: 500, loss: 0.00056, lr: 1e-05
+2025-03-16 20:41:39 Epoch 248/300 (lr=1e-05), train loss 0.00043
+2025-03-16 20:43:05 Number of iterations: 500, loss: 0.00030, lr: 1e-05
+2025-03-16 20:44:03 Epoch 249/300 (lr=1e-05), train loss 0.00046
+2025-03-16 20:45:28 Number of iterations: 500, loss: 0.00011, lr: 1e-05
+2025-03-16 20:46:27 Training for epoch 250 done, starting evaluation
+2025-03-16 20:46:29 Epoch 250/300 (lr=1e-05), train loss 0.00043, valid loss 0.00426
+2025-03-16 20:46:29 Model performance:
+2025-03-16 20:46:29   metrics/test.rmse:           6.01
+2025-03-16 20:46:29   metrics/test.rmse_pcutoff:   3.35
+2025-03-16 20:46:29   metrics/test.mAP:           53.10
+2025-03-16 20:46:29   metrics/test.mAR:           55.45
+2025-03-16 20:47:54 Number of iterations: 500, loss: 0.00007, lr: 1e-05
+2025-03-16 20:48:52 Epoch 251/300 (lr=1e-05), train loss 0.00043
+2025-03-16 20:50:18 Number of iterations: 500, loss: 0.00018, lr: 1e-05
+2025-03-16 20:51:17 Epoch 252/300 (lr=1e-05), train loss 0.00041
+2025-03-16 20:52:42 Number of iterations: 500, loss: 0.00069, lr: 1e-05
+2025-03-16 20:53:40 Epoch 253/300 (lr=1e-05), train loss 0.00041
+2025-03-16 20:55:06 Number of iterations: 500, loss: 0.00005, lr: 1e-05
+2025-03-16 20:56:04 Epoch 254/300 (lr=1e-05), train loss 0.00041
+2025-03-16 20:57:29 Number of iterations: 500, loss: 0.00063, lr: 1e-05
+2025-03-16 20:58:29 Epoch 255/300 (lr=1e-05), train loss 0.00043
+2025-03-16 20:59:54 Number of iterations: 500, loss: 0.00055, lr: 1e-05
+2025-03-16 21:00:53 Epoch 256/300 (lr=1e-05), train loss 0.00042
+2025-03-16 21:02:18 Number of iterations: 500, loss: 0.00034, lr: 1e-05
+2025-03-16 21:03:17 Epoch 257/300 (lr=1e-05), train loss 0.00045
+2025-03-16 21:04:43 Number of iterations: 500, loss: 0.00022, lr: 1e-05
+2025-03-16 21:05:44 Epoch 258/300 (lr=1e-05), train loss 0.00042
+2025-03-16 21:07:11 Number of iterations: 500, loss: 0.00050, lr: 1e-05
+2025-03-16 21:08:12 Epoch 259/300 (lr=1e-05), train loss 0.00045
+2025-03-16 21:09:39 Number of iterations: 500, loss: 0.00029, lr: 1e-05
+2025-03-16 21:10:40 Training for epoch 260 done, starting evaluation
+2025-03-16 21:10:42 Epoch 260/300 (lr=1e-05), train loss 0.00042, valid loss 0.00427
+2025-03-16 21:10:42 Model performance:
+2025-03-16 21:10:42   metrics/test.rmse:           6.18
+2025-03-16 21:10:42   metrics/test.rmse_pcutoff:   3.37
+2025-03-16 21:10:42   metrics/test.mAP:           53.10
+2025-03-16 21:10:42   metrics/test.mAR:           55.45
+2025-03-16 21:12:09 Number of iterations: 500, loss: 0.00017, lr: 1e-05
+2025-03-16 21:13:10 Epoch 261/300 (lr=1e-05), train loss 0.00045
+2025-03-16 21:14:38 Number of iterations: 500, loss: 0.00008, lr: 1e-05
+2025-03-16 21:15:38 Epoch 262/300 (lr=1e-05), train loss 0.00043
+2025-03-16 21:17:05 Number of iterations: 500, loss: 0.00058, lr: 1e-05
+2025-03-16 21:18:05 Epoch 263/300 (lr=1e-05), train loss 0.00044
+2025-03-16 21:19:33 Number of iterations: 500, loss: 0.00071, lr: 1e-05
+2025-03-16 21:20:32 Epoch 264/300 (lr=1e-05), train loss 0.00043
+2025-03-16 21:21:59 Number of iterations: 500, loss: 0.00023, lr: 1e-05
+2025-03-16 21:22:59 Epoch 265/300 (lr=1e-05), train loss 0.00040
+2025-03-16 21:24:25 Number of iterations: 500, loss: 0.00054, lr: 1e-05
+2025-03-16 21:25:26 Epoch 266/300 (lr=1e-05), train loss 0.00041
+2025-03-16 21:26:53 Number of iterations: 500, loss: 0.00312, lr: 1e-05
+2025-03-16 21:27:54 Epoch 267/300 (lr=1e-05), train loss 0.00042
+2025-03-16 21:29:22 Number of iterations: 500, loss: 0.00008, lr: 1e-05
+2025-03-16 21:30:22 Epoch 268/300 (lr=1e-05), train loss 0.00043
+2025-03-16 21:31:50 Number of iterations: 500, loss: 0.00004, lr: 1e-05
+2025-03-16 21:32:50 Epoch 269/300 (lr=1e-05), train loss 0.00043
+2025-03-16 21:34:18 Number of iterations: 500, loss: 0.00011, lr: 1e-05
+2025-03-16 21:35:18 Training for epoch 270 done, starting evaluation
+2025-03-16 21:35:20 Epoch 270/300 (lr=1e-05), train loss 0.00042, valid loss 0.00431
+2025-03-16 21:35:20 Model performance:
+2025-03-16 21:35:20   metrics/test.rmse:           5.43
+2025-03-16 21:35:20   metrics/test.rmse_pcutoff:   3.33
+2025-03-16 21:35:20   metrics/test.mAP:           53.08
+2025-03-16 21:35:20   metrics/test.mAR:           55.45
+2025-03-16 21:36:48 Number of iterations: 500, loss: 0.00045, lr: 1e-05
+2025-03-16 21:37:48 Epoch 271/300 (lr=1e-05), train loss 0.00043
+2025-03-16 21:39:17 Number of iterations: 500, loss: 0.00039, lr: 1e-05
+2025-03-16 21:40:18 Epoch 272/300 (lr=1e-05), train loss 0.00043
+2025-03-16 21:41:46 Number of iterations: 500, loss: 0.00064, lr: 1e-05
+2025-03-16 21:42:46 Epoch 273/300 (lr=1e-05), train loss 0.00042
+2025-03-16 21:44:14 Number of iterations: 500, loss: 0.00085, lr: 1e-05
+2025-03-16 21:45:14 Epoch 274/300 (lr=1e-05), train loss 0.00042
+2025-03-16 21:46:43 Number of iterations: 500, loss: 0.00024, lr: 1e-05
+2025-03-16 21:47:44 Epoch 275/300 (lr=1e-05), train loss 0.00043
+2025-03-16 21:49:09 Number of iterations: 500, loss: 0.00041, lr: 1e-05
+2025-03-16 21:50:07 Epoch 276/300 (lr=1e-05), train loss 0.00043
+2025-03-16 21:51:34 Number of iterations: 500, loss: 0.00023, lr: 1e-05
+2025-03-16 21:52:34 Epoch 277/300 (lr=1e-05), train loss 0.00041
+2025-03-16 21:54:02 Number of iterations: 500, loss: 0.00080, lr: 1e-05
+2025-03-16 21:55:02 Epoch 278/300 (lr=1e-05), train loss 0.00043
+2025-03-16 21:56:30 Number of iterations: 500, loss: 0.00015, lr: 1e-05
+2025-03-16 21:57:31 Epoch 279/300 (lr=1e-05), train loss 0.00042
+2025-03-16 21:58:59 Number of iterations: 500, loss: 0.00003, lr: 1e-05
+2025-03-16 21:59:59 Training for epoch 280 done, starting evaluation
+2025-03-16 22:00:01 Epoch 280/300 (lr=1e-05), train loss 0.00042, valid loss 0.00424
+2025-03-16 22:00:01 Model performance:
+2025-03-16 22:00:01   metrics/test.rmse:           5.34
+2025-03-16 22:00:01   metrics/test.rmse_pcutoff:   3.33
+2025-03-16 22:00:01   metrics/test.mAP:           53.33
+2025-03-16 22:00:01   metrics/test.mAR:           55.68
+2025-03-16 22:01:29 Number of iterations: 500, loss: 0.00004, lr: 1e-05
+2025-03-16 22:02:29 Epoch 281/300 (lr=1e-05), train loss 0.00043
+2025-03-16 22:03:56 Number of iterations: 500, loss: 0.00128, lr: 1e-05
+2025-03-16 22:04:55 Epoch 282/300 (lr=1e-05), train loss 0.00043
+2025-03-16 22:06:21 Number of iterations: 500, loss: 0.00027, lr: 1e-05
+2025-03-16 22:07:19 Epoch 283/300 (lr=1e-05), train loss 0.00043
+2025-03-16 22:08:44 Number of iterations: 500, loss: 0.00093, lr: 1e-05
+2025-03-16 22:09:43 Epoch 284/300 (lr=1e-05), train loss 0.00041
+2025-03-16 22:11:08 Number of iterations: 500, loss: 0.00012, lr: 1e-05
+2025-03-16 22:12:07 Epoch 285/300 (lr=1e-05), train loss 0.00043
+2025-03-16 22:13:32 Number of iterations: 500, loss: 0.00061, lr: 1e-05
+2025-03-16 22:14:31 Epoch 286/300 (lr=1e-05), train loss 0.00040
+2025-03-16 22:15:56 Number of iterations: 500, loss: 0.00048, lr: 1e-05
+2025-03-16 22:16:55 Epoch 287/300 (lr=1e-05), train loss 0.00041
+2025-03-16 22:18:20 Number of iterations: 500, loss: 0.00011, lr: 1e-05
+2025-03-16 22:19:19 Epoch 288/300 (lr=1e-05), train loss 0.00040
+2025-03-16 22:20:44 Number of iterations: 500, loss: 0.00038, lr: 1e-05
+2025-03-16 22:21:42 Epoch 289/300 (lr=1e-05), train loss 0.00042
+2025-03-16 22:23:07 Number of iterations: 500, loss: 0.00054, lr: 1e-05
+2025-03-16 22:24:06 Training for epoch 290 done, starting evaluation
+2025-03-16 22:24:08 Epoch 290/300 (lr=1e-05), train loss 0.00043, valid loss 0.00427
+2025-03-16 22:24:08 Model performance:
+2025-03-16 22:24:08   metrics/test.rmse:           5.93
+2025-03-16 22:24:08   metrics/test.rmse_pcutoff:   3.37
+2025-03-16 22:24:08   metrics/test.mAP:           53.12
+2025-03-16 22:24:08   metrics/test.mAR:           55.45
+2025-03-16 22:25:32 Number of iterations: 500, loss: 0.00033, lr: 1e-05
+2025-03-16 22:26:31 Epoch 291/300 (lr=1e-05), train loss 0.00044
+2025-03-16 22:27:56 Number of iterations: 500, loss: 0.00011, lr: 1e-05
+2025-03-16 22:28:53 Epoch 292/300 (lr=1e-05), train loss 0.00042
+2025-03-16 22:30:18 Number of iterations: 500, loss: 0.00074, lr: 1e-05
+2025-03-16 22:31:16 Epoch 293/300 (lr=1e-05), train loss 0.00043
+2025-03-16 22:32:41 Number of iterations: 500, loss: 0.00028, lr: 1e-05
+2025-03-16 22:33:39 Epoch 294/300 (lr=1e-05), train loss 0.00041
+2025-03-16 22:35:04 Number of iterations: 500, loss: 0.00173, lr: 1e-05
+2025-03-16 22:36:03 Epoch 295/300 (lr=1e-05), train loss 0.00040
+2025-03-16 22:37:28 Number of iterations: 500, loss: 0.00087, lr: 1e-05
+2025-03-16 22:38:26 Epoch 296/300 (lr=1e-05), train loss 0.00039
+2025-03-16 22:39:51 Number of iterations: 500, loss: 0.00009, lr: 1e-05
+2025-03-16 22:40:49 Epoch 297/300 (lr=1e-05), train loss 0.00041
+2025-03-16 22:42:15 Number of iterations: 500, loss: 0.00070, lr: 1e-05
+2025-03-16 22:43:13 Epoch 298/300 (lr=1e-05), train loss 0.00043
+2025-03-16 22:44:38 Number of iterations: 500, loss: 0.00066, lr: 1e-05
+2025-03-16 22:45:36 Epoch 299/300 (lr=1e-05), train loss 0.00041
+2025-03-16 22:47:01 Number of iterations: 500, loss: 0.00052, lr: 1e-05
+2025-03-16 22:47:59 Training for epoch 300 done, starting evaluation
+2025-03-16 22:48:01 Epoch 300/300 (lr=1e-05), train loss 0.00041, valid loss 0.00417
+2025-03-16 22:48:01 Model performance:
+2025-03-16 22:48:01   metrics/test.rmse:           5.86
+2025-03-16 22:48:01   metrics/test.rmse_pcutoff:   3.36
+2025-03-16 22:48:01   metrics/test.mAP:           53.42
+2025-03-16 22:48:01   metrics/test.mAR:           55.68
